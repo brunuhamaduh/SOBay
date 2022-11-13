@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#define MAX 100
 
 void Abort(char *msg)
 {
@@ -9,121 +10,83 @@ void Abort(char *msg)
   exit(1);
 }
 
-int VerificaArgumentos(const char comando[20])
+int VerificaArgumentos(char *token)
 {
   int quantidade = 0;
-  for(int i = 0; i < strlen(comando); i++)
+  while(token != NULL)
   {
-    if(comando[i] == ' ')
-      quantidade++;
+    quantidade++;
+    token = strtok(NULL, " ");
   }
-
   return quantidade;
 }
 
-bool VerificaComando(const char string[100])
+bool VerificaComando(char *string)
 {
-  int i, argumentos, contador = 0;
-  char temp[20];
-  for(i = 0; i < strlen(string); i++)
-  {
-    if(string[i] == ' ')
-      break;
-    temp[i] = string[i];
-  }
-  temp[i] = '\0';
+  int i, argumentos = 0;
+  char *FirstWord;
 
-  argumentos = VerificaArgumentos(temp);
-  printf("\nTEMP %s\n", temp);
-  printf("\nARGUMENTOS %d\n", argumentos);
-  /*
-  if(strcmp(temp, "sell") == 0)
-  {
-    if(argumentos == 5)
-      return true;
-  }
-  else if(strcmp(temp, "list") == 0)
-  {
-    printf("teste");
-    if(argumentos == 0)
-      return true;
-  }
-  else if(strcmp(temp, "licat") == 0)
+  FirstWord = strtok(string, " ");
+  argumentos = VerificaArgumentos(FirstWord);
+
+  if(strcmp(FirstWord, "list") == 0 || strcmp(FirstWord, "cash") == 0 || strcmp(FirstWord, "time") == 0)
   {
     if(argumentos == 1)
       return true;
   }
-  else if(strcmp(temp, "lisel") == 0)
-  {
-    if(argumentos == 1)
-      return true;
-  }
-  else if(strcmp(temp, "lival") == 0)
-  {
-    if(argumentos == 1)
-      return true;
-  }
-  else if(strcmp(temp, "litime") == 0)
-  {
-    if(argumentos == 1)
-      return true;
-  }
-  else if(strcmp(temp, "time") == 0)
-  {
-    if(argumentos == 0)
-      return true;
-  }
-  else if(strcmp(temp, "buy") == 0)
+
+  else if(strcmp(FirstWord, "licat") == 0 || strcmp(FirstWord, "lisel") == 0 || strcmp(FirstWord, "add") == 0 || strcmp(FirstWord, "lival") == 0 || strcmp(FirstWord, "litime") == 0)
   {
     if(argumentos == 2)
       return true;
   }
-  else if(strcmp(temp, "cash") == 0)
+
+  else if(strcmp(FirstWord, "buy") == 0)
   {
-    if(argumentos == 0)
+    if(argumentos == 3)
       return true;
   }
-  else if(strcmp(temp, "add") == 0)
+
+  else if(strcmp(FirstWord, "sell") == 0)
   {
-    if(argumentos == 1)
+    if(argumentos == 6)
       return true;
   }
-*/
+
   return false;
 }
 
 int main(int argc, char* argv[])
 {
-  char comando[100];
+  char comando[MAX];
 
   if(argc != 3)
-  {
     Abort("\nSintaxe Errada\n./frontend <USERNAME> <PASSWORD>\n");
-  }
+
+  printf("\nComandos disponiveis\n");
+  printf("sell <nome> <categoria> <preco-base> <preco-compre-ja> <duração>\n");
+  printf("list\n");
+  printf("licat <nome-categoria>\n");
+  printf("lisel <username do vendedor>\n");
+  printf("lival <preço-máximo>\n");
+  printf("litime <hora-em-segundos>\n");
+  printf("time\n");
+  printf("buy <id> <valor>\n");
+  printf("cash\n");
+  printf("add <valor>\n");
+  printf("exit\n");
 
   do
   {
-    printf("\nComandos disponiveis\n");
-    printf("sell <nome> <categoria> <preco-base> <preco-compre-ja> <duração>\n");
-    printf("list\n");
-    printf("licat <nome-categoria>\n");
-    printf("lisel <username do vendedor>\n");
-    printf("lival <preço-máximo>\n");
-    printf("litime <hora-em-segundos>\n");
-    printf("time\n");
-    printf("buy <id> <valor>\n");
-    printf("cash\n");
-    printf("add <valor>\n");
-    printf("exit\n");
     printf("Comando: ");
+    fgets(comando, MAX, stdin);
+    comando[strcspn(comando, "\n")] = '\0'; //retira a newline do fgets;
     
-    fgets(comando, 100, stdin);
     if(VerificaComando(comando) == true)
-      printf("[RESULT] Nice \n");
-    else
+      printf("[RESULT] Nice\n");
+    else if(strcmp(comando, "exit") != 0)
       printf("[RESULT] Not valid\n");
     
-
   } while(strcmp(comando, "exit") != 0);
   return 0;
 }
