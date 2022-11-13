@@ -1,7 +1,11 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+
 #define MAX 100
 
 void Abort(char *msg)
@@ -62,11 +66,32 @@ int VerificaComando(char *string)
 
 int main(int argc, char* argv[])
 {
-  int Res;
+  int Res, estado, send[2], child;
   char comando[MAX];
 
   if(argc != 3)
     Abort("\nSintaxe Errada\n./frontend <USERNAME> <PASSWORD>\n");
+
+  pipe(send);
+  child = fork();
+
+  if(child == 0)
+  {
+    close(send[1]); //close pipe write
+    close(0); 
+    dup(send[0]);
+    close(send[0]); //close pipe read
+    execl("backend", "backend", NULL);
+    Abort("Erro ao executar backend"); //Só entra aqui se execl falhar
+  }
+
+  close(send[0]); //close pip read
+  write(send[1], argv[1], strlen(argv[1]));
+  write(send[1], " ", 1);
+  write(send[1], argv[2], strlen(argv[2]));
+  write(send[1], "\0", 1);
+  close(send[1]);
+  wait(&estado);
 
   printf("\nComandos disponiveis\n");
   printf("sell <nome> <categoria> <preco-base> <preco-compre-ja> <duração>\n");
@@ -88,11 +113,11 @@ int main(int argc, char* argv[])
     comando[strcspn(comando, "\n")] = '\0'; //retira a newline do fgets;
     
     Res = VerificaComando(comando);
-    if(Res == 0)
+    if(Res == 0 && strcmp(comando, "exit") != 0)
       printf("Comando inválido\n");
     else if(Res == 1)
       printf("Número de argumentos incorrecto\n");
-    else if(strcmp(comando, "exit") != 0)
+    else if(Res == 2)
       printf("Sucesso\n");
     
   } while(strcmp(comando, "exit") != 0);

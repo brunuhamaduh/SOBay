@@ -7,6 +7,11 @@
 #include <stdbool.h>
 #define MAX 100
 
+typedef struct Utilizador
+{
+  char Username[20], Password[20];
+} Utilizador;
+
 int VerificaArgumentos(char *token)
 {
   int quantidade = 0;
@@ -43,10 +48,39 @@ int VerificaComando(char *string)
   return 0;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
-  char comando[MAX];
-  int Res;
+  char comando[MAX], input_username[20], input_password[20];
+  int Res, Num_Users = 2;
+  bool Match = false;
+
+  Utilizador *Utilizadores = malloc(Num_Users * sizeof(Utilizador));
+
+  strcpy(Utilizadores[0].Username, "Maria");
+  strcpy(Utilizadores[0].Password, "Leal");
+  strcpy(Utilizadores[1].Username, "Cristina");
+  strcpy(Utilizadores[1].Password, "Ferreira");
+
+  if(strcspn(argv[0], "/") != 1) //se não for executado pelo administador
+  {
+    scanf("%s %s", input_username, input_password);
+    for(int i = 0; i < Num_Users; i++)
+    {
+      if(strcmp(Utilizadores[i].Username, input_username) == 0 && strcmp(Utilizadores[i].Password, input_password) == 0)
+      {
+        Match = true;
+        break;
+      }
+    }
+
+    if(Match == false)
+      printf("Credenciais não existem\n");
+    else if(Match == true)
+      printf("Bem-vindo/a %s", input_username);
+
+    free(Utilizadores);
+    return 0;
+  }
 
   printf("\nComandos disponiveis\n");
   printf("users\n");
@@ -64,13 +98,14 @@ int main(void)
     comando[strcspn(comando, "\n")] = '\0'; //retira a newline do fgets;
     
     Res = VerificaComando(comando);
-    if(Res == 0)
+    if(Res == 0 && strcmp(comando, "close") != 0)
       printf("Comando inválido\n");
     else if(Res == 1)
       printf("Número de argumentos incorrecto\n");
-    else if(strcmp(comando, "close") != 0)
+    else if(Res == 2)
       printf("Sucesso\n");
     
   } while(strcmp(comando, "close") != 0);
+
   return 0;
 }
