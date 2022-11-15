@@ -124,7 +124,7 @@ int main(int argc, char *argv[], char *env[])
   getFileName(env, filename);
   Num_Users = loadUsersFile(filename);
 
-  if(strcspn(argv[0], "/") != 1)
+  if(strcspn(argv[0], "/") != 1) //Se não for executado pelo administrador
   {
     scanf("%s %s", input_username, input_password);
     printf("User Exists = %d", isUserValid(input_username, input_password));
