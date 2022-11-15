@@ -22,29 +22,22 @@ typedef struct Utilizador
 } Utilizador;
 
 Utilizador *Utilizadores;
+int Num_Users;
 
 int saveUsersFile(char * filename)
 {
   FILE *fp;
-  int Num_Users;
-  fp = fopen(filename, "r");
-  if(fp == NULL)
-    return -1;
-
-  fscanf(fp, "%d", &Num_Users);
-
-  fclose(fp);
 
   fp = fopen(filename, "w");
   if(fp == NULL)
     return -1;
-  
-  for(int i = 0; i < Num_Users; i++)
+
+  fprintf(fp, "%d\n", Num_Users);
+
+  for(int i = 0; i <  Num_Users; i++)
   {
-    fprintf(fp, "%s %s %d", Utilizadores[i].Username, Utilizadores[i].Password, Utilizadores[i].saldo);
-    printf("USERNAME[%d] = %s", i, Utilizadores[i].Username);
-    printf("Password[%d] = %s", i, Utilizadores[i].Password);
-    printf("Saldo[%d] = %d", i, Utilizadores[i].saldo);
+    fprintf(fp, "%s %s %d\n", Utilizadores[i].Username, Utilizadores[i].Password, Utilizadores[i].saldo);
+    fprintf(fp, "teste\n");
   }
 
   fclose(fp);
@@ -54,12 +47,12 @@ int saveUsersFile(char * filename)
 int loadUsersFile(char *pathname)
 {
   FILE *fp;
-  int Num_Users;
+  int Count;
   fp = fopen(pathname, "r");
   if(fp == NULL)
     return -1;
 
-  fscanf(fp, "%d", &Num_Users);
+  fscanf(fp, "%d", &Count);
 
   Utilizadores = realloc(Utilizadores, Num_Users * sizeof(Utilizador));
   if(Utilizadores == NULL)
@@ -69,7 +62,7 @@ int loadUsersFile(char *pathname)
     fscanf(fp, "%s %s %d", Utilizadores[i].Username, Utilizadores[i].Password, &Utilizadores[i].saldo);
 
   fclose(fp);
-  return Num_Users;
+  return Count;
 }
 
 int VerificaArgumentos(char *token)
@@ -114,9 +107,8 @@ int main(int argc, char *argv[])
   int Res, Num_Users = 1;
   bool Match = false;
 
-  //saveUsersFile("teste.txt");
-  int teste = loadUsersFile("teste.txt");
-  printf("[RESULTADO LOAD] = %d", teste);
+  saveUsersFile("teste.txt");
+  //Num_Users = loadUsersFile("teste.txt");
   return(0);
 
   if(strcspn(argv[0], "/") != 1) //se não for executado pelo administador
