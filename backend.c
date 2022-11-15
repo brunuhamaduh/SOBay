@@ -5,14 +5,14 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <stdbool.h>
-#include "Provided/users_lib.h"
+#include "Lib/users_lib.h"
 #define MAX 100
 
 typedef struct Item
 {
   char Nome[20], Categoria[20];
   float preco_base, preco_agora;
-  int duracao;
+  int ID, duracao;
 } Item;
 
 typedef struct Utilizador
@@ -32,12 +32,9 @@ int saveUsersFile(char * filename)
   if(fp == NULL)
     return -1;
 
-  fprintf(fp, "%d\n", Num_Users);
-
   for(int i = 0; i <  Num_Users; i++)
   {
     fprintf(fp, "%s %s %d\n", Utilizadores[i].Username, Utilizadores[i].Password, Utilizadores[i].saldo);
-    fprintf(fp, "teste\n");
   }
 
   fclose(fp);
@@ -47,22 +44,32 @@ int saveUsersFile(char * filename)
 int loadUsersFile(char *pathname)
 {
   FILE *fp;
-  int Count;
+  int Count, i = 0;
+  char buffer[100];
+
   fp = fopen(pathname, "r");
   if(fp == NULL)
     return -1;
 
-  fscanf(fp, "%d", &Count);
-
-  Utilizadores = realloc(Utilizadores, Num_Users * sizeof(Utilizador));
-  if(Utilizadores == NULL)
-    return -1;
-  
-  for(int i = 0; i < Num_Users; i++)
-    fscanf(fp, "%s %s %d", Utilizadores[i].Username, Utilizadores[i].Password, &Utilizadores[i].saldo);
+  while(fgets(buffer, sizeof(buffer), fp) != NULL)
+  {
+    Utilizadores = realloc(Utilizadores, (i+1) * sizeof(Utilizador));
+    sscanf(buffer, "%s%s%d", Utilizadores[i].Username, Utilizadores[i].Password, &Utilizadores[i].saldo);
+    i++;
+  }
 
   fclose(fp);
-  return Count;
+  return i;
+}
+
+int isUserValid(char * username, char * password)
+{
+  for(int i = 0; i < Num_Users; i++)
+  {
+    if(strcmp(Utilizadores[i].Username, username) == 0 && strcmp(Utilizadores[i].Password, password) == 0)
+      return 1;
+  }
+  return 0;
 }
 
 int VerificaArgumentos(char *token)
@@ -97,41 +104,34 @@ int VerificaComando(char *string)
       return 2;
     return 1;
   }
-
   return 0;
 }
 
-int main(int argc, char *argv[])
+void getFileName(char *env[], char *filename)
 {
-  char comando[MAX], input_username[20], input_password[20];
-  int Res, Num_Users = 1;
-  bool Match = false;
+  strcpy(filename, "Ficheiros/");
+  if(getenv("FUSERS") != NULL)
+    strcat(filename, getenv("FUSERS"));
+  else
+    strcat(filename, "Users");
+  strcat(filename,".txt");
+}
 
-  saveUsersFile("teste.txt");
-  //Num_Users = loadUsersFile("teste.txt");
-  return(0);
+int main(int argc, char *argv[], char *env[])
+{
+  char comando[MAX], input_username[20], input_password[20], filename[30];
+  int Res;
+  getFileName(env, filename);
+  Num_Users = loadUsersFile(filename);
 
-  if(strcspn(argv[0], "/") != 1) //se não for executado pelo administador
+  if(strcspn(argv[0], "/") != 1)
   {
     scanf("%s %s", input_username, input_password);
-    for(int i = 0; i < Num_Users; i++)
-    {
-      if(strcmp(Utilizadores[i].Username, input_username) == 0 && strcmp(Utilizadores[i].Password, input_password) == 0)
-      {
-        Match = true;
-        break;
-      }
-    }
-
-    if(Match == false)
-      printf("Credenciais não existem\n");
-    else if(Match == true)
-      printf("Bem-vindo/a %s", input_username);
-
+    printf("User Exists = %d", isUserValid(input_username, input_password));
     free(Utilizadores);
     return 0;
   }
-
+    
   printf("\nComandos disponiveis\n");
   printf("users\n");
   printf("list\n"); //ONLY ONE (id, nome item, categoria, preço atual, preço compre já, vendedor, licitador mais elevado ou menos elevado)
