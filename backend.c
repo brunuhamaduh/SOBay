@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <stdbool.h>
+#include "Provided/users_lib.h"
 #define MAX 100
 
 typedef struct Item
@@ -17,8 +18,59 @@ typedef struct Item
 typedef struct Utilizador
 {
   char Username[20], Password[20];
-  Item Vendas;
+  int saldo;
 } Utilizador;
+
+Utilizador *Utilizadores;
+
+int saveUsersFile(char * filename)
+{
+  FILE *fp;
+  int Num_Users;
+  fp = fopen(filename, "r");
+  if(fp == NULL)
+    return -1;
+
+  fscanf(fp, "%d", &Num_Users);
+
+  fclose(fp);
+
+  fp = fopen(filename, "w");
+  if(fp == NULL)
+    return -1;
+  
+  for(int i = 0; i < Num_Users; i++)
+  {
+    fprintf(fp, "%s %s %d", Utilizadores[i].Username, Utilizadores[i].Password, Utilizadores[i].saldo);
+    printf("USERNAME[%d] = %s", i, Utilizadores[i].Username);
+    printf("Password[%d] = %s", i, Utilizadores[i].Password);
+    printf("Saldo[%d] = %d", i, Utilizadores[i].saldo);
+  }
+
+  fclose(fp);
+  return 0;
+}
+
+int loadUsersFile(char *pathname)
+{
+  FILE *fp;
+  int Num_Users;
+  fp = fopen(pathname, "r");
+  if(fp == NULL)
+    return -1;
+
+  fscanf(fp, "%d", &Num_Users);
+
+  Utilizadores = realloc(Utilizadores, Num_Users * sizeof(Utilizador));
+  if(Utilizadores == NULL)
+    return -1;
+  
+  for(int i = 0; i < Num_Users; i++)
+    fscanf(fp, "%s %s %d", Utilizadores[i].Username, Utilizadores[i].Password, &Utilizadores[i].saldo);
+
+  fclose(fp);
+  return Num_Users;
+}
 
 int VerificaArgumentos(char *token)
 {
@@ -59,15 +111,13 @@ int VerificaComando(char *string)
 int main(int argc, char *argv[])
 {
   char comando[MAX], input_username[20], input_password[20];
-  int Res, Num_Users = 2;
+  int Res, Num_Users = 1;
   bool Match = false;
 
-  Utilizador *Utilizadores = malloc(Num_Users * sizeof(Utilizador));
-
-  strcpy(Utilizadores[0].Username, "Maria");
-  strcpy(Utilizadores[0].Password, "Leal");
-  strcpy(Utilizadores[1].Username, "Cristina");
-  strcpy(Utilizadores[1].Password, "Ferreira");
+  //saveUsersFile("teste.txt");
+  int teste = loadUsersFile("teste.txt");
+  printf("[RESULTADO LOAD] = %d", teste);
+  return(0);
 
   if(strcspn(argv[0], "/") != 1) //se não for executado pelo administador
   {
