@@ -50,7 +50,7 @@ int loadUsersFile(char *pathname)
   fp = fopen(pathname, "r");
   if(fp == NULL)
     return -1;
-
+    
   while(fgets(buffer, sizeof(buffer), fp) != NULL)
   {
     Utilizadores = realloc(Utilizadores, (i+1) * sizeof(Utilizador));
@@ -130,7 +130,7 @@ int VerificaComando(char *string)
   return 0;
 }
 
-void getFileName(char *env[], char *filename)
+void getUserFileName(char *env[], char *filename)
 {
   strcpy(filename, "Ficheiros/");
   if(getenv("FUSERS") != NULL)
@@ -140,15 +140,25 @@ void getFileName(char *env[], char *filename)
   strcat(filename,".txt");
 }
 
+void getItemFileName(char *env[], char *filename)
+{
+  strcpy(filename, "Ficheiros/");
+  if(getenv("FITEMS") != NULL)
+    strcat(filename, getenv("FITEMS"));
+  else
+    strcat(filename, "Items");
+  strcat(filename,".txt");
+}
+
 int main(int argc, char *argv[], char *env[])
 {
-  char comando[MAX], input_username[20], input_password[20], filename[30];
+  char comando[MAX], input_username[20], input_password[20], Userfilename[30], Itemfilename[30];
   int Res;
-  getFileName(env, filename);
-  Num_Users = loadUsersFile(filename);
 
   if(strcspn(argv[0], "/") != 1) //Verifica se foi executado diretamente ou não
   {
+    getUserFileName(env, Userfilename);
+    Num_Users = loadUsersFile(Userfilename);
     scanf("%s %s", input_username, input_password);
     printf("User Exists = %d\n", isUserValid(input_username, input_password));
     free(Utilizadores);
@@ -157,15 +167,17 @@ int main(int argc, char *argv[], char *env[])
 
   //PARTE DO ADMINISTRADOR
   //SÓ ENTRA AQUI QUANDO FOR EXECUTADO DIRETAMENTE
-  printf("\nComandos disponiveis\n");
+  printf("Comandos disponiveis\n");
+  printf("------------------------\n");
   printf("users\n");
   printf("list\n"); //ONLY ONE (id, nome item, categoria, preço atual, preço compre já, vendedor, licitador mais elevado ou menos elevado)
   printf("kick <username>\n");
   printf("prom\n");
   printf("reprom\n");
-  printf("cancel <nome-do-executável-do-promotor>\n");
+  printf("cancel <nome-do-executavel-do-promotor>\n");
   printf("close\n");
-
+  printf("------------------------\n");
+  
   do
   {
     printf("Comando: ");
