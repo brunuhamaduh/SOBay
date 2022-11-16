@@ -32,7 +32,7 @@ int saveUsersFile(char * filename)
   if(fp == NULL)
     return -1;
 
-  for(int i = 0; i <  Num_Users; i++)
+  for(int i = 0; i < Num_Users; i++)
   {
     fprintf(fp, "%s %s %d\n", Utilizadores[i].Username, Utilizadores[i].Password, Utilizadores[i].saldo);
   }
@@ -70,6 +70,29 @@ int isUserValid(char * username, char * password)
       return 1;
   }
   return 0;
+}
+
+int getUserBalance(char * username)
+{
+  for(int i = 0; i < Num_Users; i++)
+  {
+    if(strcmp(Utilizadores[i].Username, username) == 0)
+      return Utilizadores[i].saldo;
+  }
+  return -1; //caso não exista utilizador com o username dado
+}
+
+int updateUserBalance(char * username, int value)
+{
+  for(int i = 0; i < Num_Users; i++)
+  {
+    if(strcmp(Utilizadores[i].Username, username) == 0)
+    {
+      Utilizadores[i].saldo = value;
+      return 0;
+    }
+  }
+  return -1; //caso não exista utilizador com o username dado
 }
 
 int VerificaArgumentos(char *token)
@@ -124,14 +147,16 @@ int main(int argc, char *argv[], char *env[])
   getFileName(env, filename);
   Num_Users = loadUsersFile(filename);
 
-  if(strcspn(argv[0], "/") != 1) //Se não for executado pelo administrador
+  if(strcspn(argv[0], "/") != 1) //Verifica se foi executado diretamente ou não
   {
     scanf("%s %s", input_username, input_password);
-    printf("User Exists = %d", isUserValid(input_username, input_password));
+    printf("User Exists = %d\n", isUserValid(input_username, input_password));
     free(Utilizadores);
     return 0;
   }
-    
+
+  //PARTE DO ADMINISTRADOR
+  //SÓ ENTRA AQUI QUANDO FOR EXECUTADO DIRETAMENTE
   printf("\nComandos disponiveis\n");
   printf("users\n");
   printf("list\n"); //ONLY ONE (id, nome item, categoria, preço atual, preço compre já, vendedor, licitador mais elevado ou menos elevado)

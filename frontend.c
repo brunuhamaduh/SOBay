@@ -25,9 +25,9 @@ int VerificaArgumentos(char *token)
   return quantidade;
 }
 
-int VerificaComando(char *string)
+void VerificaComando(char *string)
 {
-  int i, argumentos = 0;
+  int i, argumentos, Res = 0;
   char *FirstWord;
 
   FirstWord = strtok(string, " ");
@@ -36,32 +36,41 @@ int VerificaComando(char *string)
   if(strcmp(FirstWord, "list") == 0 || strcmp(FirstWord, "cash") == 0 || strcmp(FirstWord, "time") == 0)
   {
     if(argumentos == 1)
-      return 2;
-    return 1;
+      Res = 2;
+    else
+      Res = 1;
   }
 
   else if(strcmp(FirstWord, "licat") == 0 || strcmp(FirstWord, "lisel") == 0 || strcmp(FirstWord, "add") == 0 || strcmp(FirstWord, "lival") == 0 || strcmp(FirstWord, "litime") == 0)
   {
     if(argumentos == 2)
-      return 2;
-    return 1;
+      Res = 2;
+    else
+      Res = 1;
   }
 
   else if(strcmp(FirstWord, "buy") == 0)
   {
     if(argumentos == 3)
-      return 2;
-    return 1;
+      Res = 2;
+    else
+      Res = 1;
   }
 
   else if(strcmp(FirstWord, "sell") == 0)
   {
     if(argumentos == 6)
-      return 2;
-    return 1;
+      Res = 2;
+    else
+      Res = 1;
   }
 
-  return 0;
+  if(Res == 0 && strcmp(string, "exit") != 0)
+    printf("Comando inválido\n");
+  else if(Res == 1)
+    printf("Número de argumentos incorrecto\n");
+  else if(Res == 2)
+    printf("Sucesso\n");
 }
 
 int main(int argc, char* argv[])
@@ -93,7 +102,7 @@ int main(int argc, char* argv[])
   close(send[1]);
   wait(&estado);
 
-  printf("\nComandos disponiveis\n");
+  printf("Comandos disponiveis\n");
   printf("sell <nome> <categoria> <preco-base> <preco-compre-ja> <duração>\n");
   printf("list\n");
   printf("licat <nome-categoria>\n");
@@ -110,16 +119,8 @@ int main(int argc, char* argv[])
   {
     printf("Comando: ");
     fgets(comando, MAX, stdin);
-    comando[strcspn(comando, "\n")] = '\0'; //retira a newline do fgets;
-    
-    Res = VerificaComando(comando);
-    if(Res == 0 && strcmp(comando, "exit") != 0)
-      printf("Comando inválido\n");
-    else if(Res == 1)
-      printf("Número de argumentos incorrecto\n");
-    else if(Res == 2)
-      printf("Sucesso\n");
-    
+    comando[strcspn(comando, "\n")] = '\0'; //tira "\n" do input;
+    VerificaComando(comando);
   } while(strcmp(comando, "exit") != 0);
   return 0;
 }
