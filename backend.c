@@ -47,7 +47,7 @@ int saveUsersFile(char * filename)
 int loadUsersFile(char *pathname)
 {
   FILE *fp;
-  int Count, i = 0;
+  int i = 0;
   char buffer[100];
 
   fp = fopen(pathname, "r");
@@ -133,6 +133,44 @@ int VerificaComando(char *string)
   return 0;
 }
 
+int saveItemsFile(char * filename, Item *Items, int Num_Items) //FALTA TESTAR ISTO
+{
+  FILE *fp;
+
+  fp = fopen(filename, "w");
+  if(fp == NULL)
+    return -1;
+
+  for(int i = 0; i < Num_Items; i++)
+  {
+    fprintf(fp, "%d %s %s %.2f %.2f %d\n", Items[i].ID, Items[i].Nome, Items[i].Categoria, Items[i].preco_base, Items[i].preco_agora, Items[i].duracao);
+  }
+
+  fclose(fp);
+  return 0;
+}
+
+int loadItemsFile(char *pathname, Item **Items)
+{
+  FILE *fp;
+  int i = 0;
+  char buffer[100];
+
+  fp = fopen(pathname, "r");
+  if(fp == NULL)
+    return -1;
+  
+  while(fgets(buffer, sizeof(buffer), fp) != NULL)
+  {
+    *Items = realloc(*Items, (i+1) * sizeof(Item));
+    sscanf(buffer, "%d%s%s%.2f%.2f%d", &(*Items)[i].ID, (*Items)[i].Nome, (*Items)[i].Categoria, &(*Items)[i].preco_base, &(*Items)[i].preco_agora, &(*Items)[i].duracao);
+    i++;
+  }
+
+  fclose(fp);
+  return i;
+}
+
 void getUserFileName(char *env[], char *filename)
 {
   strcpy(filename, "Ficheiros/");
@@ -155,16 +193,24 @@ void getItemFileName(char *env[], char *filename)
 
 int main(int argc, char *argv[], char *env[])
 {
-  char comando[MAX], input_username[20], input_password[20], Userfilename[30], Itemfilename[30];
-  int Res;
+  char comando[MAX];
+  char input_username[20], input_password[20];
+  char Userfilename[30], Itemfilename[30];
+  int Res, Num_Items;
+  Item *Items = malloc(0);
 
   if(strcspn(argv[0], "/") != 1) //Verifica se foi executado diretamente ou não
   {
     getUserFileName(env, Userfilename);
+    getItemFileName(env, Itemfilename);
+
     Num_Users = loadUsersFile(Userfilename);
+    Num_Items = loadItemsFile(Itemfilename, &Items);
+
     scanf("%s %s", input_username, input_password);
     printf("User Exists = %d\n", isUserValid(input_username, input_password));
     free(Utilizadores);
+    free(Items);
     return 0;
   }
 
@@ -183,7 +229,6 @@ int main(int argc, char *argv[], char *env[])
   
   do
   {
-    printf("Comando: ");
     fgets(comando, MAX, stdin);
     comando[strcspn(comando, "\n")] = '\0'; //retira a newline do fgets;
     
@@ -221,7 +266,6 @@ int main(int argc, char *argv[], char *env[])
             printf("%s", buffer);
             sigqueue(PID_Promotor, SIGUSR1, stop);
           }
-          printf("Promotor fechou");
           close(prom[0]);
           exit(0);
         }
