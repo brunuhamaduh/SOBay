@@ -163,7 +163,7 @@ int loadItemsFile(char *pathname, Item **Items)
   while(fgets(buffer, sizeof(buffer), fp) != NULL)
   {
     *Items = realloc(*Items, (i+1) * sizeof(Item));
-    sscanf(buffer, "%d%s%s%.2f%.2f%d", &(*Items)[i].ID, (*Items)[i].Nome, (*Items)[i].Categoria, &(*Items)[i].preco_base, &(*Items)[i].preco_agora, &(*Items)[i].duracao);
+    sscanf(buffer, "%d%s%s%f%f%d", &(*Items)[i].ID, (*Items)[i].Nome, (*Items)[i].Categoria, &(*Items)[i].preco_base, &(*Items)[i].preco_agora, &(*Items)[i].duracao);
     i++;
   }
 
