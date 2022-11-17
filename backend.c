@@ -3,8 +3,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <string.h>
 #include <stdbool.h>
+#include <signal.h>
 #include "Lib/users_lib.h"
 #define MAX 100
 
@@ -190,8 +193,40 @@ int main(int argc, char *argv[], char *env[])
     else if(Res == 1)
       printf("Número de argumentos incorrecto\n");
     else if(Res == 2)
-      printf("Sucesso\n");
-    
+    {
+      if(strcmp(comando, "reprom") == 0)
+      {
+        if(fork() == 0)
+        {
+          int estado, PID_Promotor, prom[2];
+          char buffer[100];
+          union sigval stop;
+
+          pipe(prom);
+          PID_Promotor = fork();
+
+          if(PID_Promotor == 0)
+          {
+            close(prom[0]); //close read
+            close(1);
+            dup(prom[1]);
+            close(prom[1]);
+            execl("Promotor/promotor_oficial", "Promotor/promotor_oficial", NULL);
+          }
+          close(prom[1]); //close write
+          while(kill(PID_Promotor, 0) == 0) //enquanto estiver a correr
+          {
+            int nbytes = read(prom[0], buffer, sizeof(buffer));
+            buffer[nbytes] = '\0';
+            printf("%s", buffer);
+            sigqueue(PID_Promotor, SIGUSR1, stop);
+          }
+          printf("Promotor fechou");
+          close(prom[0]);
+          exit(0);
+        }
+      }
+    }
   } while(strcmp(comando, "close") != 0);
 
   return 0;

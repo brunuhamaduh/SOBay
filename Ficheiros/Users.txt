@@ -1,2 +1,3 @@
-Maria Leal 20
-Cristina Ferreira 30
+Maria Leal 30
+Cristina Ferreira 40
+Manuel Joaquim 50
