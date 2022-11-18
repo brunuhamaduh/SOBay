@@ -1,12 +1,12 @@
 default: all
 
-all: clean frontend.o backend.o
+all: backend frontend
 
-frontend.o: frontend.c
+backend:
+	gcc backend.c ./Header/backlib.c ./Header/users_lib.c -o backend
+
+frontend:
 	gcc frontend.c -o frontend
 
-backend.o: backend.c
-	gcc backend.c -o backend
-
 clean:
-	rm -f backend frontend
+	rm frontend backend
