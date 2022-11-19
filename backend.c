@@ -14,12 +14,11 @@ int main(int argc, char *argv[], char *env[])
   char Userfilename[30], Itemfilename[30];
   int Res, Num_Items;
   struct Item *Items = malloc(0);
+  getUserFileName(env, Userfilename);
+  getItemFileName(env, Itemfilename);
 
   if(strcspn(argv[0], "/") != 1) //Verifica se foi executado diretamente ou não
   {
-    getUserFileName(env, Userfilename);
-    getItemFileName(env, Itemfilename);
-
     Num_Users = loadUsersFile(Userfilename);
     Num_Items = loadItemsFile(Itemfilename, &Items);
 
@@ -85,6 +84,24 @@ int main(int argc, char *argv[], char *env[])
           close(prom[0]);
           exit(0);
         }
+      }
+      else if(strcmp(comando, "users") == 0)
+      {
+        Num_Users = loadUsersFile(Userfilename);
+        if(Num_Users == -1)
+        {
+          printf("Erro ao ler ficheiro\n");
+          exit(-1);
+        }
+        printf("Lido com sucesso\n"); 
+        for(int i = 0; i < Num_Users; i++)
+          Utilizadores[i].saldo = Utilizadores[i].saldo - 1;
+        if(saveUsersFile(Userfilename) == -1)
+        {
+          printf("Erro ao escrever ficheiro\n");
+          exit(-1);
+        }
+        printf("Escrito com sucesso\n");
       }
     }
   } while(strcmp(comando, "close") != 0);
