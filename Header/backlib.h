@@ -8,19 +8,9 @@ struct Item
   int ID, duracao;
 };
 
-struct Utilizador
-{
-  char Username[20], Password[20];
-  int saldo;
-};
-
-extern struct Utilizador *Utilizadores;
-extern int Num_Users;
-
 int VerificaArgumentos(char *token);
 int VerificaComando(char *string);
 int saveItemsFile(char * filename, struct Item *Items, int Num_Items);
 int loadItemsFile(char *pathname, struct Item **Items);
-void getUserFileName(char *env[], char *filename);
-void getItemFileName(char *env[], char *filename);
+void getFileNames(char *env[], char *filename1, char *filename2);
 #endif

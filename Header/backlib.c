@@ -3,9 +3,6 @@
 #include <stdlib.h>
 #include "backlib.h"
 
-struct Utilizador *Utilizadores;
-int Num_Users;
-
 int VerificaArgumentos(char *token)
 {
   int quantidade = 0;
@@ -79,22 +76,21 @@ int loadItemsFile(char *pathname, struct Item **Items)
   return i;
 }
 
-void getUserFileName(char *env[], char *filename)
+void getFileNames(char *env[], char *filename1, char *filename2)
 {
-  strcpy(filename, "Ficheiros/");
-  if(getenv("FUSERS") != NULL)
-    strcat(filename, getenv("FUSERS"));
-  else
-    strcat(filename, "Users");
-  strcat(filename,".txt");
-}
+  strcpy(filename1, "Ficheiros/");
+  strcpy(filename2, "Ficheiros/");
 
-void getItemFileName(char *env[], char *filename)
-{
-  strcpy(filename, "Ficheiros/");
-  if(getenv("FITEMS") != NULL)
-    strcat(filename, getenv("FITEMS"));
+  if(getenv("FUSERS") != NULL)
+    strcat(filename1, getenv("FUSERS"));
   else
-    strcat(filename, "Items");
-  strcat(filename,".txt");
+    strcat(filename1, "Users");
+
+  if(getenv("FITEMS") != NULL)
+    strcat(filename2, getenv("FITEMS"));
+  else
+    strcat(filename2, "Items");
+
+  strcat(filename1,".txt");
+  strcat(filename2,".txt");
 }
