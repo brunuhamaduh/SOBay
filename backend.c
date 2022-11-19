@@ -9,22 +9,25 @@
 
 int main(int argc, char *argv[], char *env[])
 {
-  char comando[MAX];
-  char input_username[20], input_password[20];
-  char Userfilename[30], Itemfilename[30];
+  char comando[MAX], input_username[20], input_password[20], Userfilename[30], Itemfilename[30];
   int Res, Num_Items;
   struct Item *Items = malloc(0);
-  getUserFileName(env, Userfilename);
-  getItemFileName(env, Itemfilename);
+  getFileNames(env, Userfilename, Itemfilename);
 
   if(strcspn(argv[0], "/") != 1) //Verifica se foi executado diretamente ou não
   {
-    Num_Users = loadUsersFile(Userfilename);
+    int check;
+    int Num_Users = loadUsersFile(Userfilename);
     Num_Items = loadItemsFile(Itemfilename, &Items);
 
     scanf("%s %s", input_username, input_password);
-    printf("User Exists = %d\n", isUserValid(input_username, input_password));
-    free(Utilizadores);
+    check = isUserValid(input_username, input_password);
+    if(check == 0)
+      printf("Não existe/Password errada\n");
+    else if(check == 1)
+      printf("Utilizador existe\n");
+    else
+      printf("Erro!\n");
     free(Items);
     return 0;
   }
@@ -78,8 +81,8 @@ int main(int argc, char *argv[], char *env[])
           {
             int nbytes = read(prom[0], buffer, sizeof(buffer));
             buffer[nbytes] = '\0';
-            printf("%s", buffer);
-            sigqueue(PID_Promotor, SIGUSR1, stop);
+            printf("Promoção na categoria %s", buffer);
+            sigqueue(PID_Promotor, SIGUSR1, stop); //APENAS META 1
           }
           close(prom[0]);
           exit(0);
@@ -87,15 +90,16 @@ int main(int argc, char *argv[], char *env[])
       }
       else if(strcmp(comando, "users") == 0)
       {
-        Num_Users = loadUsersFile(Userfilename);
+        int Num_Users = loadUsersFile(Userfilename);
         if(Num_Users == -1)
         {
           printf("Erro ao ler ficheiro\n");
           exit(-1);
         }
-        printf("Lido com sucesso\n"); 
-        for(int i = 0; i < Num_Users; i++)
-          Utilizadores[i].saldo = Utilizadores[i].saldo - 1;
+        printf("Lido com sucesso\n");
+        if(isUserValid("Cristina", "Ferreira") == 1)
+          updateUserBalance("Cristina", getUserBalance("Cristina") - 1);
+
         if(saveUsersFile(Userfilename) == -1)
         {
           printf("Erro ao escrever ficheiro\n");
@@ -105,6 +109,5 @@ int main(int argc, char *argv[], char *env[])
       }
     }
   } while(strcmp(comando, "close") != 0);
-
   return 0;
 }
