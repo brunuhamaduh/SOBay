@@ -42,6 +42,7 @@ int main(int argc, char *argv[], char *env[])
   printf("prom\n");
   printf("reprom\n");
   printf("cancel <nome-do-executavel-do-promotor>\n");
+  printf("items\n");
   printf("close\n");
   printf("------------------------\n");
   
@@ -80,8 +81,10 @@ int main(int argc, char *argv[], char *env[])
           while(kill(PID_Promotor, 0) == 0) //enquanto estiver a correr (META 1)
           {
             char buffer[100];
-            int nbytes = read(prom[0], &buffer, sizeof(buffer));
+            int nbytes = read(prom[0], buffer, sizeof(buffer));
             buffer[nbytes] = '\0';
+            if(nbytes > 1)
+              printf("Promoção na categoria ");
             printf("%s", buffer);
             sigqueue(PID_Promotor, SIGUSR1, stop); //APENAS META 1
           }
@@ -97,7 +100,7 @@ int main(int argc, char *argv[], char *env[])
           printf("Erro ao ler ficheiro\n");
           exit(-1);
         }
-        printf("Lido com sucesso\n");
+        printf("[Users] Lido com sucesso\n");
         if(isUserValid("Cristina", "Ferreira") == 1)
           updateUserBalance("Cristina", getUserBalance("Cristina") - 1);
 
@@ -106,7 +109,19 @@ int main(int argc, char *argv[], char *env[])
           printf("Erro ao escrever ficheiro\n");
           exit(-1);
         }
-        printf("Escrito com sucesso\n");
+        printf("[Users] Escrito com sucesso\n");
+      }
+
+      else if(strcmp(comando, "items") == 0)
+      {
+        Num_Items = loadItemsFile(Itemfilename, &Items);
+        if(Num_Items == -1)
+          exit(-1);
+        
+        printf("[Items] Lido com sucesso\n");
+        printf("ID Nome Categoria Preco_Base Preco_Agora Duracao\n");
+        for(int i = 0; i < Num_Items; i++)
+          printf("%d %s %s %.2f %.2f %d\n", Items[i].ID, Items[i].Nome, Items[i].Categoria, Items[i].preco_base, Items[i].preco_agora, Items[i].duracao);
       }
     }
   } while(strcmp(comando, "close") != 0);

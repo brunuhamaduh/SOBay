@@ -22,7 +22,7 @@ int VerificaComando(char *string)
   FirstWord = strtok(string, " ");
   argumentos = VerificaArgumentos(FirstWord);
 
-  if(strcmp(FirstWord, "users") == 0 || strcmp(FirstWord, "prom") == 0 || strcmp(FirstWord, "reprom") == 0)
+  if(strcmp(FirstWord, "users") == 0 || strcmp(FirstWord, "prom") == 0 || strcmp(FirstWord, "reprom") == 0 || strcmp(FirstWord, "items") == 0)
   {
     if(argumentos == 1)
       return 2;
