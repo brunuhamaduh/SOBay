@@ -80,12 +80,10 @@ int main(int argc, char *argv[], char *env[])
           while(kill(PID_Promotor, 0) == 0) //enquanto estiver a correr (META 1)
           {
             char buffer[100];
-            if (read(prom[0], buffer, sizeof(buffer)) > 1)
-            {
-              buffer[strcspn(buffer, "\n")] = '\0';
-              printf("Promoção na categoria %s\n", buffer);
-              sigqueue(PID_Promotor, SIGUSR1, stop); //APENAS META 1
-            }
+            int nbytes = read(prom[0], &buffer, sizeof(buffer));
+            buffer[nbytes] = '\0';
+            printf("%s", buffer);
+            sigqueue(PID_Promotor, SIGUSR1, stop); //APENAS META 1
           }
           close(prom[0]);
           exit(0);
