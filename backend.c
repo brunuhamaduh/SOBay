@@ -62,7 +62,6 @@ int main(int argc, char *argv[], char *env[])
         if(fork() == 0)
         {
           int estado, PID_Promotor, prom[2];
-          char buffer[100];
           union sigval stop;
 
           pipe(prom);
@@ -77,12 +76,16 @@ int main(int argc, char *argv[], char *env[])
             execl("Promotor/promotor_oficial", "Promotor/promotor_oficial", NULL);
           }
           close(prom[1]); //close write
-          while(kill(PID_Promotor, 0) == 0) //enquanto estiver a correr
+          
+          while(kill(PID_Promotor, 0) == 0) //enquanto estiver a correr (META 1)
           {
-            int nbytes = read(prom[0], buffer, sizeof(buffer));
-            buffer[nbytes] = '\0';
-            printf("Promoção na categoria %s", buffer);
-            sigqueue(PID_Promotor, SIGUSR1, stop); //APENAS META 1
+            char buffer[100];
+            if (read(prom[0], buffer, sizeof(buffer)) > 1)
+            {
+              buffer[strcspn(buffer, "\n")] = '\0';
+              printf("Promoção na categoria %s\n", buffer);
+              sigqueue(PID_Promotor, SIGUSR1, stop); //APENAS META 1
+            }
           }
           close(prom[0]);
           exit(0);
