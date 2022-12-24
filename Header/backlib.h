@@ -4,7 +4,7 @@
 struct Item
 {
   char Nome[20], Categoria[20];
-  float preco_base, preco_agora;
+  int preco_base, preco_agora;
   int ID, duracao;
 };
 

@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "Header/sharedlib.h"
 
 #define MAX 100
 
@@ -75,32 +76,24 @@ void VerificaComando(char *string)
 
 int main(int argc, char* argv[])
 {
-  int Res, estado, send[2], child;
+  int Res, estado, send[2], child, bf;
   char comando[MAX];
+  User user;
 
   if(argc != 3)
-    Abort("\nSintaxe Errada\n./frontend <USERNAME> <PASSWORD>\n");
+    Abort("[ERRO] Sintaxe Errada\nSintaxe Correta: ./frontend <USERNAME> <PASSWORD>\n");
 
-  pipe(send);
-  child = fork();
-
-  if(child == 0)
+  if(access("BF", F_OK) != 0)
   {
-    close(send[1]); //close pipe write
-    close(0); 
-    dup(send[0]);
-    close(send[0]); //close pipe read
-    execl("backend", "backend", NULL);
-    Abort("Erro ao executar backend"); //Só entra aqui se execl falhar
+	  Abort("[ERRO] Servidor fechado...\n");
   }
 
-  close(send[0]); //close pip read
-  write(send[1], argv[1], strlen(argv[1]));
-  write(send[1], " ", 1);
-  write(send[1], argv[2], strlen(argv[2]));
-  write(send[1], "\0", 1);
-  close(send[1]);
-  wait(&estado);
+  bf = open("BF", O_RDWR);
+
+  strcpy(user.Username, argv[1]);
+  strcpy(user.Password, argv[2]);
+  user.pid = getpid();
+  write(bf, &user, sizeof(User));
 
   printf("Comandos disponiveis\n");
   printf("sell <nome> <categoria> <preco-base> <preco-compre-ja> <duração>\n");

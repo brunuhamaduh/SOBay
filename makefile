@@ -2,7 +2,7 @@ default: all
 
 all: backend frontend
 
-backend: backend.o ./Header/backlib.o ./Header/users_lib.o
+backend: backend.o ./Header/backlib.o ./Header/users_lib.o ./Header/sharedlib.h
 	gcc backend.o ./Header/backlib.o ./Header/users_lib.o -o backend
 
 frontend: frontend.o 
@@ -12,7 +12,7 @@ backlib.o: ./Header/backlib.c ./Header/backlib.h
 	gcc -c ./Header/backlib.c
 backend.o: backend.c ./Header/backlib.c ./Header/backlib.h
 	gcc -c backend.c
-frontend.o: frontend.c
+frontend.o: frontend.c ./Header/sharedlib.h
 	gcc -c frontend.c
 
 clean:

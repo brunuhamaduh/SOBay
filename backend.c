@@ -3,37 +3,69 @@
 #include <sys/wait.h>
 #include <stdbool.h>
 #include <signal.h>
+#include <pthread.h>
 #include "Header/users_lib.h"
 #include "Header/backlib.h"
+#include "Header/sharedlib.h"
 #define MAX 100
+
+typedef struct
+{
+  int continua;
+  int bf;
+  int *cliente;
+  pthread_mutex_t *wait;
+} USER_DATA;
+
+
+void *trata_pipe(void *pdata)
+{
+  USER_DATA *data = pdata;
+  User user;
+  int n;
+  int nclientes;
+
+  do
+  {
+    n = read(data->bf, &user, sizeof(User));
+    if(n == sizeof(User))
+    {
+      pthread_mutex_lock(data->wait);
+      printf("Li Username = '%s' Password = '%s' PID = '%d'\n", user.Username, user.Password, user.pid); //FOR NOW REMOVE LATER
+      int check = isUserValid(user.Username, user.Password);
+      if(check == 1 && nclientes < 20)
+      {
+        data->cliente[nclientes++] = user.pid;
+      }
+      pthread_mutex_unlock(data->wait);
+    }
+  } while (data->continua);
+}
 
 int main(int argc, char *argv[], char *env[])
 {
   char comando[MAX], input_username[20], input_password[20], Userfilename[30], Itemfilename[30];
-  int Res, Num_Items;
+  int cliente[20] = {0};
+  int Res, Num_Items, bf;
+  
+  USER_DATA data;
+  pthread_mutex_t wait;
+  pthread_t thread;
+  
   struct Item *Items = malloc(0);
   getFileNames(env, Userfilename, Itemfilename);
 
-  if(strcspn(argv[0], "/") != 1) //Verifica se foi executado diretamente ou não
-  {
-    int check;
-    int Num_Users = loadUsersFile(Userfilename);
-    Num_Items = loadItemsFile(Itemfilename, &Items);
+  mkfifo("BF", 0666);
+  bf = open("BF", O_RDWR);
 
-    scanf("%s %s", input_username, input_password);
-    check = isUserValid(input_username, input_password);
-    if(check == 0)
-      printf("Não existe/Password errada\n");
-    else if(check == 1)
-      printf("Utilizador existe\n");
-    else
-      printf("Erro!\n");
-    free(Items);
-    return 0;
-  }
+  pthread_mutex_init(&wait, NULL);
+  
+  data.continua = 1;
+  data.bf = bf;
+  data.cliente = cliente;
+  data.wait = &wait;
+  pthread_create(&thread, NULL, trata_pipe, &data);
 
-  //PARTE DO ADMINISTRADOR
-  //SÓ ENTRA AQUI QUANDO FOR EXECUTADO DIRETAMENTE
   printf("Comandos disponiveis\n");
   printf("------------------------\n");
   printf("users\n");
@@ -125,5 +157,12 @@ int main(int argc, char *argv[], char *env[])
       }
     }
   } while(strcmp(comando, "close") != 0);
+
+  data.continua = 0;
+  pthread_join(thread, NULL);
+
+
+  close(bf); //Fecha pipe
+  unlink("BF"); //Apaga pipe
   return 0;
 }
