@@ -16,4 +16,4 @@ frontend.o: frontend.c
 	gcc -c frontend.c
 
 clean:
-	rm -f frontend backend ./Header/backlib
+	rm -f frontend backend ./Header/backlib ./Header/backlib.o backend.o frontend.o
