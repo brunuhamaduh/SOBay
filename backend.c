@@ -17,29 +17,39 @@ typedef struct
   pthread_mutex_t *wait;
 } USER_DATA;
 
-
 void *trata_pipe(void *pdata)
 {
   USER_DATA *data = pdata;
   User user;
   int n;
-  int nclientes;
-
+  int nclientes = 0;
+  loadUsersFile("Ficheiros/Users.txt");
   do
   {
     n = read(data->bf, &user, sizeof(User));
     if(n == sizeof(User))
     {
       pthread_mutex_lock(data->wait);
-      printf("Li Username = '%s' Password = '%s' PID = '%d'\n", user.Username, user.Password, user.pid); //FOR NOW REMOVE LATER
       int check = isUserValid(user.Username, user.Password);
-      if(check == 1 && nclientes < 20)
+      if(check == 1 && nclientes < 20 && user.intent == 1)
       {
         data->cliente[nclientes++] = user.pid;
+      }
+      else if(user.intent == 0)
+      {
+        for(int i = 0; i < nclientes; i++)
+        {
+          if(data->cliente[i] == user.pid)
+          {
+            data->cliente[i] = 0;
+            break;
+          }
+        }
       }
       pthread_mutex_unlock(data->wait);
     }
   } while (data->continua);
+  pthread_exit(NULL);
 }
 
 int main(int argc, char *argv[], char *env[])
@@ -48,9 +58,10 @@ int main(int argc, char *argv[], char *env[])
   int cliente[20] = {0};
   int Res, Num_Items, bf;
   
-  USER_DATA data;
+  USER_DATA data[2];
   pthread_mutex_t wait;
-  pthread_t thread;
+  pthread_t thread[2];
+  User temp;
   
   struct Item *Items = malloc(0);
   getFileNames(env, Userfilename, Itemfilename);
@@ -60,12 +71,13 @@ int main(int argc, char *argv[], char *env[])
 
   pthread_mutex_init(&wait, NULL);
   
-  data.continua = 1;
-  data.bf = bf;
-  data.cliente = cliente;
-  data.wait = &wait;
-  pthread_create(&thread, NULL, trata_pipe, &data);
+  data[0].continua = 1;
+  data[0].bf = bf;
+  data[0].cliente = cliente;
+  data[0].wait = &wait;
 
+  pthread_create(&thread[0], NULL, trata_pipe, &data[0]);
+  
   printf("Comandos disponiveis\n");
   printf("------------------------\n");
   printf("users\n");
@@ -153,14 +165,16 @@ int main(int argc, char *argv[], char *env[])
         printf("[Items] Lido com sucesso\n");
         printf("ID Nome Categoria Preco_Base Preco_Agora Duracao\n");
         for(int i = 0; i < Num_Items; i++)
-          printf("%d %s %s %.2f %.2f %d\n", Items[i].ID, Items[i].Nome, Items[i].Categoria, Items[i].preco_base, Items[i].preco_agora, Items[i].duracao);
+          printf("%d %s %s %d %d %d\n", Items[i].ID, Items[i].Nome, Items[i].Categoria, Items[i].preco_base, Items[i].preco_agora, Items[i].duracao);
       }
     }
   } while(strcmp(comando, "close") != 0);
 
-  data.continua = 0;
-  pthread_join(thread, NULL);
+  data[0].continua = 0;
+  write(bf, &temp, sizeof(User));
+  pthread_join(thread[0], NULL);
 
+  pthread_mutex_destroy(&wait);
 
   close(bf); //Fecha pipe
   unlink("BF"); //Apaga pipe

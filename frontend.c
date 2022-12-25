@@ -93,6 +93,7 @@ int main(int argc, char* argv[])
   strcpy(user.Username, argv[1]);
   strcpy(user.Password, argv[2]);
   user.pid = getpid();
+  user.intent = 1;
   write(bf, &user, sizeof(User));
 
   printf("Comandos disponiveis\n");
@@ -115,5 +116,8 @@ int main(int argc, char* argv[])
     comando[strcspn(comando, "\n")] = '\0'; //tira "\n" do input;
     VerificaComando(comando);
   } while(strcmp(comando, "exit") != 0);
+
+  user.intent = 0;
+  write(bf, &user, sizeof(User));
   return 0;
 }

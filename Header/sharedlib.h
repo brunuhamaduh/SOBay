@@ -3,7 +3,7 @@
 
 typedef struct 
 {
-  int pid;
+  int pid, intent;
   char Username[20], Password[20];
 } User;
 
