@@ -44,18 +44,28 @@ void *recebe(void *pdata)
       read(data->caixa, &feedback, sizeof(feedback));
       printf("[ID do item] = %d\nComando: ", feedback);
     }
-    else if(strcmp(comando, "list") == 0 || strcmp(comando, "licat") == 0)
+    else if(strcmp(comando, "list") == 0 || strcmp(comando, "licat") == 0 || strcmp(comando, "lisel") == 0)
     {
+      char comando2[20];
       read(data->caixa, &feedback, sizeof(feedback));
+      read(data->caixa, comando2, sizeof(comando2));
       if(feedback != 0)
       {
-        printf("[Items a serem vendidos]\n");
-        printf("ID|NOME_PRODUTO|CATEGORIA|PRECO_BASE|PRECO_AGORA|DURACAO\n");
+        printf("[Items a serem vendidos");
+        fflush(stdout);
+        if(strcmp(comando, "licat") == 0)
+          printf(" na categoria %s]\n", comando2);
+        else if(strcmp(comando, "lisel") == 0)
+          printf(" por %s]\n", comando2);
+        else if(strcmp(comando, "list") == 0)
+          printf("]\n");
+
+        printf("|ID|NOME PRODUTO|CATEGORIA|PRECOB|PRECOA|SEC|SELLER|HBidder|\n");
         item = realloc(item, sizeof(Item) * feedback);
         read(data->caixa, item, sizeof(Item) * feedback);
         for(int i = 0; i < feedback; i++)
         {
-          printf("%-2d|%-12s|%-9s|%-10d|%-11d|%-7d\n", item[i].ID, item[i].Nome, item[i].Categoria, item[i].preco_base, item[i].preco_agora, item[i].duracao);
+          printf("|%-2.2d|%-12.12s|%-9.9s|%-6.6d|%-6.6d|%-3.3d|%-6.6s|%-7.7s|\n", item[i].ID, item[i].Nome, item[i].Categoria, item[i].preco_base, item[i].preco_agora, item[i].duracao, item[i].seller, item[i].highestbidder);
         }
         printf("Comando: ");
       }
@@ -63,7 +73,9 @@ void *recebe(void *pdata)
       {
         if(strcmp(comando, "licat") == 0)
           printf("Nao existe produtos a serem vendidos com esta categoria\n");
-        else
+        else if(strcmp(comando, "lisel") == 0)
+          printf("Nao existe produtos a serem vendidos por este utilizador\n");
+        else if(strcmp(comando, "list") == 0)
           printf("Nao existe produtos a serem vendidos\n");
 
         printf("Comando: ");

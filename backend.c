@@ -105,7 +105,7 @@ void *trata_login(void *pdata)
           Items[nitems - 1].preco_base = atoi(user.input[3]);
           Items[nitems - 1].preco_agora = atoi(user.input[4]);
           Items[nitems - 1].duracao = atoi(user.input[5]);
-          strcpy(Items[nitems - 1].seller, "temp");
+          strcpy(Items[nitems - 1].seller, user.Username);
           strcpy(Items[nitems - 1].highestbidder, "-");
           saveItemsFile("Ficheiros/Items.txt", Items, nitems);
           write(fdcli, user.input[0], sizeof(user.input[0]));
@@ -115,6 +115,7 @@ void *trata_login(void *pdata)
         {
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &nitems, sizeof(nitems));
+          write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, Items, sizeof(Item) * nitems);
         }
         else if(strcmp(user.input[0], "licat") == 0)
@@ -134,6 +135,28 @@ void *trata_login(void *pdata)
           
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &ntemp, sizeof(ntemp));
+          write(fdcli, user.input[1], sizeof(user.input[1]));
+          write(fdcli, temp, sizeof(Item) * ntemp);
+          free(temp);
+        }
+        else if(strcmp(user.input[0], "lisel") == 0)
+        {
+          Item *temp = malloc(0);
+          int ntemp = 0;
+          
+          for(int i = 0; i < nitems; i++)
+          {
+            if(strcmp(Items[i].seller, user.input[1]) == 0)
+            {
+              ntemp++;
+              temp = realloc(temp, sizeof(Item) * ntemp);
+              temp[ntemp - 1] = Items[i];
+            }
+          }
+          
+          write(fdcli, user.input[0], sizeof(user.input[0]));
+          write(fdcli, &ntemp, sizeof(ntemp));
+          write(fdcli, user.input[1], sizeof(user.input[1]));
           write(fdcli, temp, sizeof(Item) * ntemp);
           free(temp);
         }
@@ -231,6 +254,7 @@ int main(int argc, char *argv[], char *env[])
           printf("%s ", nomecliente[i]);
           fflush(stdout);
         }
+        printf("\n");
       }
     }
   } while(strcmp(comando, "close") != 0);
