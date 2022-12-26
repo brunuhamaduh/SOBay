@@ -6,7 +6,6 @@
 #include <pthread.h>
 #include "Header/users_lib.h"
 #include "Header/backlib.h"
-#include "Header/sharedlib.h"
 #define MAX 100
 
 typedef struct
@@ -101,9 +100,26 @@ void *trata_login(void *pdata)
           Items[nitems - 1].preco_base = atoi(user.input[3]);
           Items[nitems - 1].preco_agora = atoi(user.input[4]);
           Items[nitems - 1].duracao = atoi(user.input[5]);
+          saveItemsFile("Ficheiros/Items.txt", Items, nitems);
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &Items[nitems - 1].ID, sizeof(Items[nitems - 1].ID));
-          saveItemsFile("Ficheiros/Items.txt", Items, nitems);
+        }
+        else if(strcmp(user.input[0], "list") == 0)
+        {
+          write(fdcli, user.input[0], sizeof(user.input[0]));
+          write(fdcli, &nitems, sizeof(nitems));
+          /*
+          for(int i = 0; i < nitems; i++)
+          {
+            write(fdcli, &Items[i].ID, sizeof(Items[i].ID));
+            write(fdcli, &Items[i].Nome, sizeof(Items[i].Nome));
+            write(fdcli, &Items[i].Categoria, sizeof(Items[i].Categoria));
+            write(fdcli, &Items[i].preco_base, sizeof(Items[i].preco_base));
+            write(fdcli, &Items[i].preco_agora, sizeof(Items[i].preco_agora));
+            write(fdcli, &Items[i].duracao, sizeof(Items[i].duracao));
+          }
+          */
+          write(fdcli, Items, sizeof(Item) * nitems);
         }
         close(fdcli);
       }
@@ -145,7 +161,7 @@ int main(int argc, char *argv[], char *env[])
     fgets(comando, MAX, stdin);
     comando[strcspn(comando, "\n")] = '\0'; //retira a newline do fgets;
     
-    Res = VerificaComando(comando);
+    Res = VerificaComandoAdmin(comando);
     if(Res == 0 && strcmp(comando, "close") != 0)
       printf("Comando inválido\n");
     else if(Res == 1)
