@@ -224,12 +224,11 @@ void *trata_login(void *pdata)
                   strcpy(feedback2, "Success Bought");
                   int j;
                   Item *temp;
-
-                  updateUserBalance(user.Username, getUserBalance(user.Username) - Items[i].preco_agora);
-                  saveUsersFile("Ficheiros/Users.txt");
                   
+                  updateUserBalance(user.Username, getUserBalance(user.Username) - Items[i].preco_agora);
                   nitems--;
                   temp = malloc(nitems * sizeof(Item));
+                  
                   for(j = 0; j < i; j++)
                   {
                     temp[j] = Items[j];
@@ -240,9 +239,12 @@ void *trata_login(void *pdata)
                     temp[j] = Items[k];
                   }
 
-                  saveItemsFile("Ficheiros/Items.txt", temp, nitems);
-                  loadItemsFile("Ficheiros/Items.txt", &Items, &lastID);
+                  Items = realloc(Items, nitems * sizeof(Item));
+                  Items = temp;
                   free(temp);
+
+                  saveItemsFile("Ficheiros/Items.txt", Items, nitems);
+                  saveUsersFile("Ficheiros/Users.txt");
                 }
                 break;
               }

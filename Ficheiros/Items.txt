@@ -1,6 +1,6 @@
 5 Teste OMG 1 2 300 Maria -
 6 Sapatos Vestuario 1000 0 200 Joaquina Maria
-7 Sapatos Vestuario 50 0 200 Joaquina Maria
-8 Sapatos Vestuario 50 0 200 Joaquina Maria
-9 Sapatos Vestuario 50 0 200 Joaquina Maria
+7 Sapatos Vestuario 50 150 200 Joaquina Maria
+8 Sapatos Vestuario 50 200 200 Joaquina Maria
+9 Sapatos Vestuario 50 250 200 Joaquina Maria
 10 teste teste 1 2 200 Maria -
