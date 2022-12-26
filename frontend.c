@@ -98,10 +98,14 @@ void *recebe(void *pdata)
         printf("[AVISO] Nao podes comprar uma coisa que estas a vender\n");
       else if(strcmp(feedback2, "Success") == 0)
         printf("[SUCESSO] Es o bidder mais alto\n");
+      else if(strcmp(feedback2, "Success Bought") == 0)
+        printf("[SUCESSO] Adquirido com sucesso\n");
       else if(strcmp(feedback2, "Low price") == 0)
         printf("[AVISO] Tens que aumentar o preco\n");
       else if(strcmp(feedback2, "Not Found") == 0)
         printf("[AVISO] ID Invalido\n");
+      else if(strcmp(feedback2, "Broke") == 0)
+        printf("[AVISO] Nao tem saldo disponivel");
 
       printf("Comando: ");
     }

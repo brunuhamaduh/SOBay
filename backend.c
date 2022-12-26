@@ -27,8 +27,9 @@ void *trata_login(void *pdata)
   int nitems = 0;
   int fdcli;
   int feedback;
+  int lastID;
   char NomeCli[10];
-  nitems = loadItemsFile("Ficheiros/Items.txt", &Items);
+  nitems = loadItemsFile("Ficheiros/Items.txt", &Items, &lastID);
   loadUsersFile("Ficheiros/Users.txt");
 
   do
@@ -99,7 +100,7 @@ void *trata_login(void *pdata)
         {
           nitems++;
           Items = realloc(Items, nitems * sizeof(Item));
-          Items[nitems - 1].ID = nitems;
+          Items[nitems - 1].ID = ++lastID;
           strcpy(Items[nitems - 1].Nome, user.input[1]); 
           strcpy(Items[nitems - 1].Categoria, user.input[2]);
           Items[nitems - 1].preco_base = atoi(user.input[3]);
@@ -205,31 +206,67 @@ void *trata_login(void *pdata)
         else if(strcmp(user.input[0], "buy") == 0)
         {
           char feedback2[20] = "Not Found";
-          for(int i = 0; i < nitems; i++)
+
+          if(getUserBalance(user.Username) <= 0)
           {
-            if(Items[i].ID == atoi(user.input[1]) && atoi(user.input[2]) > Items[i].preco_agora)
+            strcpy(feedback2, "Broke");
+          }
+          else
+          {
+            for(int i = 0; i < nitems; i++)
             {
-              if(strcmp(Items[i].seller, user.Username) == 0)
+              if(Items[i].ID == atoi(user.input[1]) && atoi(user.input[2]) >= Items[i].preco_agora && Items[i].preco_agora != 0)
               {
-                strcpy(feedback2, "Own Buy");
+                if(strcmp(Items[i].seller, user.Username) == 0)
+                  strcpy(feedback2, "Own Buy");
+                else
+                {
+                  strcpy(feedback2, "Success Bought");
+                  int j;
+                  Item *temp;
+
+                  updateUserBalance(user.Username, getUserBalance(user.Username) - Items[i].preco_agora);
+                  saveUsersFile("Ficheiros/Users.txt");
+                  
+                  nitems--;
+                  temp = malloc(nitems * sizeof(Item));
+                  for(j = 0; j < i; j++)
+                  {
+                    temp[j] = Items[j];
+                  }
+
+                  for(int k = j+1; j < nitems; j++, k++)
+                  {
+                    temp[j] = Items[k];
+                  }
+
+                  saveItemsFile("Ficheiros/Items.txt", temp, nitems);
+                  loadItemsFile("Ficheiros/Items.txt", &Items, &lastID);
+                  free(temp);
+                }
+                break;
               }
-              else
+              else if(Items[i].ID == atoi(user.input[1]) && (atoi(user.input[2]) < Items[i].preco_agora || Items[i].preco_agora == 0) && atoi(user.input[2]) > Items[i].preco_base)
               {
-                strcpy(feedback2, "Success");
-                strcpy(Items[i].highestbidder, user.Username);
-                Items[i].preco_agora = atoi(user.input[2]);
-                saveItemsFile("Ficheiros/Items.txt", Items, nitems); 
+                if(strcmp(Items[i].seller, user.Username) == 0)
+                  strcpy(feedback2, "Own Buy");
+                else
+                {
+                  strcpy(feedback2, "Success");
+                  strcpy(Items[i].highestbidder, user.Username);
+                  Items[i].preco_base = atoi(user.input[2]);
+                  saveItemsFile("Ficheiros/Items.txt", Items, nitems); 
+                }
               }
-              break;
-            }
-            else if(Items[i].ID == atoi(user.input[1]) && atoi(user.input[2]) <= Items[i].preco_agora)
-            {
-              if(strcmp(Items[i].seller, user.Username) == 0)
-                strcpy(feedback2, "Own Buy");
-              else
-                strcpy(feedback2, "Low price");
-              
-              break;
+              else if(Items[i].ID == atoi(user.input[1]) && atoi(user.input[2]) <= Items[i].preco_base)
+              {
+                if(strcmp(Items[i].seller, user.Username) == 0)
+                  strcpy(feedback2, "Own Buy");
+                else
+                  strcpy(feedback2, "Low price");
+                
+                break;
+              }
             }
           }
           write(fdcli, user.input[0], sizeof(user.input[0]));

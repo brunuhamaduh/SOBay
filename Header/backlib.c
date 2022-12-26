@@ -56,7 +56,7 @@ int saveItemsFile(char * filename, Item *Items, int Num_Items)
   return 0;
 }
 
-int loadItemsFile(char *pathname, Item **Items)
+int loadItemsFile(char *pathname, Item **Items, int *lastID)
 {
   FILE *fp;
   int i = 0;
@@ -70,6 +70,7 @@ int loadItemsFile(char *pathname, Item **Items)
   {
     *Items = realloc(*Items, (i+1) * sizeof(Item));
     sscanf(buffer, "%d%s%s%d%d%d%s%s", &(*Items)[i].ID, (*Items)[i].Nome, (*Items)[i].Categoria, &(*Items)[i].preco_base, &(*Items)[i].preco_agora, &(*Items)[i].duracao, (*Items)[i].seller, (*Items)[i].highestbidder);
+    *lastID = (*Items)[i].ID;
     i++;
   }
 

@@ -19,7 +19,7 @@ typedef struct
 int VerificaArgumentosAdmin(char *token);
 int VerificaComandoAdmin(char *string);
 int saveItemsFile(char *filename, Item *Items, int Num_Items);
-int loadItemsFile(char *pathname, Item **Items);
+int loadItemsFile(char *pathname, Item **Items, int *lastID);
 void getFileNames(char *env[], char *filename1, char *filename2);
 void Abort(char *msg);
 bool VerificaComando(char *string, User *user);
