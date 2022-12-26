@@ -6,9 +6,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <stdbool.h>
+#include <pthread.h>
 #include "Header/sharedlib.h"
-
-#define MAX 100
 
 void Abort(char *msg)
 {
@@ -16,70 +16,109 @@ void Abort(char *msg)
   exit(1);
 }
 
-int VerificaArgumentos(char *token)
+bool VerificaComando(char *string, User *user)
 {
   int quantidade = 0;
+  char *token;
+  char **final;
+  bool valid = false;
+  token = strtok(string, " ");
+
+  final = malloc(quantidade * sizeof(char*));
+
   while(token != NULL)
   {
     quantidade++;
+    final = realloc(final, quantidade * sizeof(char*));
+    final[quantidade-1] = token;
     token = strtok(NULL, " ");
   }
-  return quantidade;
+
+  if(strcmp(final[0], "list") == 0 || strcmp(final[0], "cash") == 0 || strcmp(final[0], "time") == 0 || strcmp(final[0], "exit") == 0)
+  {
+    if(quantidade == 1)
+    {
+      strcpy(user->input[0], final[0]);
+      valid = true;
+    }
+  }
+
+  else if(strcmp(final[0], "licat") == 0 || strcmp(final[0], "lisel") == 0 || strcmp(final[0], "add") == 0 || strcmp(final[0], "lival") == 0 || strcmp(final[0], "litime") == 0)
+  {
+    if(quantidade == 2)
+    {
+      strcpy(user->input[0], final[0]);
+      strcpy(user->input[1], final[1]);
+      valid = true;
+    }
+  }
+
+  else if(strcmp(final[0], "buy") == 0)
+  {
+    if(quantidade == 3)
+    {
+      strcpy(user->input[0], final[0]);
+      strcpy(user->input[1], final[1]);
+      strcpy(user->input[2], final[2]);
+      valid = true;
+    }
+  }
+
+  else if(strcmp(final[0], "sell") == 0)
+  {
+    if(quantidade == 6)
+    {
+      strcpy(user->input[0], final[0]);
+      strcpy(user->input[1], final[1]);
+      strcpy(user->input[2], final[2]);
+      strcpy(user->input[3], final[3]);
+      strcpy(user->input[4], final[4]);
+      strcpy(user->input[5], final[5]);
+      valid = true;
+    }
+  }
+
+  free(token);
+  free(final);
+
+  return valid;
 }
 
-void VerificaComando(char *string)
+typedef struct
 {
-  int i, argumentos, Res = 0;
-  char *FirstWord;
+  int continua;
+  int caixa;
+  int bf;
+  pthread_mutex_t *wait;
+} USER_DATA;
 
-  FirstWord = strtok(string, " ");
-  argumentos = VerificaArgumentos(FirstWord);
+void *recebe(void *pdata)
+{
+  USER_DATA *data = pdata;
+  int feedback;
+  char comando[20];
 
-  if(strcmp(FirstWord, "list") == 0 || strcmp(FirstWord, "cash") == 0 || strcmp(FirstWord, "time") == 0)
+  do
   {
-    if(argumentos == 1)
-      Res = 2;
-    else
-      Res = 1;
-  }
-
-  else if(strcmp(FirstWord, "licat") == 0 || strcmp(FirstWord, "lisel") == 0 || strcmp(FirstWord, "add") == 0 || strcmp(FirstWord, "lival") == 0 || strcmp(FirstWord, "litime") == 0)
-  {
-    if(argumentos == 2)
-      Res = 2;
-    else
-      Res = 1;
-  }
-
-  else if(strcmp(FirstWord, "buy") == 0)
-  {
-    if(argumentos == 3)
-      Res = 2;
-    else
-      Res = 1;
-  }
-
-  else if(strcmp(FirstWord, "sell") == 0)
-  {
-    if(argumentos == 6)
-      Res = 2;
-    else
-      Res = 1;
-  }
-
-  if(Res == 0 && strcmp(string, "exit") != 0)
-    printf("Comando inválido\n");
-  else if(Res == 1)
-    printf("Número de argumentos incorrecto\n");
-  else if(Res == 2)
-    printf("Sucesso\n");
+    read(data->caixa, comando, sizeof(comando));
+    read(data->caixa, &feedback, sizeof(feedback));
+    if(strcmp(comando, "add") == 0)
+    {
+      printf("[SALDO] = %d\nComando: ", feedback);
+      fflush(stdout);
+    }
+  } while (data->continua);
+  pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[])
 {
-  int Res, estado, send[2], child, bf, caixa, feedback;
-  char comando[MAX], NomeCaixa[10];
+  int bf, caixa, feedback;
+  char comando[100], NomeCaixa[10];
   User user;
+  USER_DATA data;
+  pthread_mutex_t wait;
+  pthread_t thread;
 
   if(argc != 3)
     Abort("[ERRO] Sintaxe Errada\nSintaxe Correta: ./frontend <USERNAME> <PASSWORD>\n");
@@ -97,34 +136,47 @@ int main(int argc, char* argv[])
 
   strcpy(user.Username, argv[1]);
   strcpy(user.Password, argv[2]);
-  strcpy(user.input, "login");
+  strcpy(user.input[0], "login");
   write(bf, &user, sizeof(User));
-
-  caixa = open(NomeCaixa, O_RDONLY);
-  read(caixa, &feedback, sizeof(feedback));
   
+  caixa = open(NomeCaixa, O_RDWR);
+  read(caixa, &feedback, sizeof(feedback));
+
   if(feedback != 1)
   {
-    close(bf);
     close(caixa);
+    close(bf);
     unlink(NomeCaixa);
     Abort("Utilizador nao existe\n");
   }
 
   printf("Welcome '%s'\n", user.Username);
 
+  pthread_mutex_init(&wait, NULL);
+  
+  data.continua = 1;
+  data.caixa = caixa;
+  data.bf = bf;
+  data.wait = &wait;
+
+  pthread_create(&thread, NULL, recebe, &data);
+
+  printf("Comando: ");
+  fflush(stdout);
   do
   {
-    printf("Comando: ");
-    fflush(stdout);
-    fgets(comando, MAX, stdin);
+
+    fgets(comando, 100, stdin);
     comando[strcspn(comando, "\n")] = '\0'; //tira "\n" do input;
-    VerificaComando(comando);
+    if(VerificaComando(comando, &user))
+      write(bf, &user, sizeof(user));
   } while(strcmp(comando, "exit") != 0);
 
-  strcpy(user.input, "logout");
-  write(bf, &user, sizeof(User));
-  
+  data.continua = 0;
+  strcpy(user.input[0], "end");
+  write(caixa, &user, sizeof(User));
+  pthread_join(thread, NULL);
+
   close(caixa);
   close(bf);
   unlink(NomeCaixa);

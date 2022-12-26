@@ -17,7 +17,7 @@ typedef struct
   pthread_mutex_t *wait;
 } USER_DATA;
 
-void *trata_pipe(void *pdata)
+void *trata_login(void *pdata)
 {
   USER_DATA *data = pdata;
   User user;
@@ -34,17 +34,15 @@ void *trata_pipe(void *pdata)
     if(n == sizeof(User))
     {
       sprintf(NomeCli, "CLI%d", user.pid);
-      int check = isUserValid(user.Username, user.Password);
-      if(check == 1 && nclientes < 20 && strcmp(user.input, "login") == 0)
+      if(isUserValid(user.Username, user.Password) == 1 && nclientes < 20 && strcmp(user.input[0], "login") == 0)
       {
         data->cliente[nclientes++] = user.pid;
-        
         feedback = 1;
         fdcli = open(NomeCli, O_WRONLY);
         write(fdcli, &feedback, sizeof(feedback));
         close(fdcli);
       }
-      else if(strcmp(user.input, "logout") == 0)
+      else if(strcmp(user.input[0], "exit") == 0)
       {
         for(int i = 0; i < nclientes; i++)
         {
@@ -55,12 +53,25 @@ void *trata_pipe(void *pdata)
           }
         }
       }
-      else
+      else if((isUserValid(user.Username, user.Password) == 0 || nclientes > 20) && strcmp(user.input[0], "login") == 0)
       {
         feedback = 0;
         fdcli = open(NomeCli, O_WRONLY);
         write(fdcli, &feedback, sizeof(feedback));
         close(fdcli);
+      }
+      else
+      {
+        if(strcmp(user.input[0], "add") == 0)
+        {
+          feedback = getUserBalance(user.Username) + atoi(user.input[1]);
+          updateUserBalance(user.Username, feedback);
+          saveUsersFile("Ficheiros/Users.txt"); 
+          fdcli = open(NomeCli, O_WRONLY);
+          write(fdcli, user.input[0], sizeof(user.input[0]));
+          write(fdcli, &feedback, sizeof(feedback));
+          close(fdcli);
+        }
       }
     }
   } while (data->continua);
@@ -69,7 +80,7 @@ void *trata_pipe(void *pdata)
 
 int main(int argc, char *argv[], char *env[])
 {
-  char comando[MAX], input_username[20], input_password[20], Userfilename[30], Itemfilename[30];
+  char comando[MAX], Userfilename[30], Itemfilename[30];
   int cliente[20] = {0};
   int Res, Num_Items, bf;
   
@@ -91,7 +102,7 @@ int main(int argc, char *argv[], char *env[])
   data[0].cliente = cliente;
   data[0].wait = &wait;
 
-  pthread_create(&thread[0], NULL, trata_pipe, &data[0]);
+  pthread_create(&thread[0], NULL, trata_login, &data[0]);
   
   do
   {
@@ -111,7 +122,7 @@ int main(int argc, char *argv[], char *env[])
       {
         if(fork() == 0)
         {
-          int estado, PID_Promotor, prom[2];
+          int PID_Promotor, prom[2];
           union sigval stop;
 
           pipe(prom);
@@ -143,22 +154,12 @@ int main(int argc, char *argv[], char *env[])
       }
       else if(strcmp(comando, "users") == 0)
       {
-        int Num_Users = loadUsersFile(Userfilename);
-        if(Num_Users == -1)
-        {
-          printf("Erro ao ler ficheiro\n");
-          exit(-1);
+        printf("CLIENTES = [");
+        for(int i = 0; i < 20; i++)
+        { 
+            printf(" %d", cliente[i]);
         }
-        printf("[Users] Lido com sucesso\n");
-        if(isUserValid("Cristina", "Ferreira") == 1)
-          updateUserBalance("Cristina", getUserBalance("Cristina") - 1);
-
-        if(saveUsersFile(Userfilename) == -1)
-        {
-          printf("Erro ao escrever ficheiro\n");
-          exit(-1);
-        }
-        printf("[Users] Escrito com sucesso\n");
+        printf(" ]\n");
       }
 
       else if(strcmp(comando, "items") == 0)
