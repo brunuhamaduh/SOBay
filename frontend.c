@@ -89,6 +89,22 @@ void *recebe(void *pdata)
         printf("Comando: ");
       }
     }
+    else if(strcmp(comando, "buy") == 0)
+    {
+      char feedback2[20];
+      read(data->caixa, feedback2, sizeof(feedback2));
+
+      if(strcmp(feedback2, "Own Buy") == 0)
+        printf("[AVISO] Nao podes comprar uma coisa que estas a vender\n");
+      else if(strcmp(feedback2, "Success") == 0)
+        printf("[SUCESSO] Es o bidder mais alto\n");
+      else if(strcmp(feedback2, "Low price") == 0)
+        printf("[AVISO] Tens que aumentar o preco\n");
+      else if(strcmp(feedback2, "Not Found") == 0)
+        printf("[AVISO] ID Invalido\n");
+
+      printf("Comando: ");
+    }
     fflush(stdout);
   } while (data->continua);
   free(item);

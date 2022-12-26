@@ -167,7 +167,7 @@ void *trata_login(void *pdata)
           
           for(int i = 0; i < nitems; i++)
           {
-            if(Items[i].preco_agora <= atoi(user.input[1]) || Items[i].preco_base <= atoi(user.input[1]))
+            if(Items[i].preco_agora <= atoi(user.input[1]))
             {
               ntemp++;
               temp = realloc(temp, sizeof(Item) * ntemp);
@@ -201,6 +201,39 @@ void *trata_login(void *pdata)
           write(fdcli, user.input[1], sizeof(user.input[1]));
           write(fdcli, temp, sizeof(Item) * ntemp);
           free(temp);
+        }
+        else if(strcmp(user.input[0], "buy") == 0)
+        {
+          char feedback2[20] = "Not Found";
+          for(int i = 0; i < nitems; i++)
+          {
+            if(Items[i].ID == atoi(user.input[1]) && atoi(user.input[2]) > Items[i].preco_agora)
+            {
+              if(strcmp(Items[i].seller, user.Username) == 0)
+              {
+                strcpy(feedback2, "Own Buy");
+              }
+              else
+              {
+                strcpy(feedback2, "Success");
+                strcpy(Items[i].highestbidder, user.Username);
+                Items[i].preco_agora = atoi(user.input[2]);
+                saveItemsFile("Ficheiros/Items.txt", Items, nitems); 
+              }
+              break;
+            }
+            else if(Items[i].ID == atoi(user.input[1]) && atoi(user.input[2]) <= Items[i].preco_agora)
+            {
+              if(strcmp(Items[i].seller, user.Username) == 0)
+                strcpy(feedback2, "Own Buy");
+              else
+                strcpy(feedback2, "Low price");
+              
+              break;
+            }
+          }
+          write(fdcli, user.input[0], sizeof(user.input[0]));
+          write(fdcli, feedback2, sizeof(feedback2));
         }
         close(fdcli);
       }
