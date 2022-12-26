@@ -108,23 +108,34 @@ void *trata_login(void *pdata)
         {
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &nitems, sizeof(nitems));
-          /*
+          write(fdcli, Items, sizeof(Item) * nitems);
+        }
+        else if(strcmp(user.input[0], "licat") == 0)
+        {
+          Item *temp = malloc(0);
+          int ntemp = 0;
+          
           for(int i = 0; i < nitems; i++)
           {
-            write(fdcli, &Items[i].ID, sizeof(Items[i].ID));
-            write(fdcli, &Items[i].Nome, sizeof(Items[i].Nome));
-            write(fdcli, &Items[i].Categoria, sizeof(Items[i].Categoria));
-            write(fdcli, &Items[i].preco_base, sizeof(Items[i].preco_base));
-            write(fdcli, &Items[i].preco_agora, sizeof(Items[i].preco_agora));
-            write(fdcli, &Items[i].duracao, sizeof(Items[i].duracao));
+            if(strcmp(Items[i].Categoria, user.input[1]) == 0)
+            {
+              ntemp++;
+              temp = realloc(temp, sizeof(Item) * ntemp);
+              temp[ntemp - 1] = Items[i];
+            }
           }
-          */
-          write(fdcli, Items, sizeof(Item) * nitems);
+          
+          write(fdcli, user.input[0], sizeof(user.input[0]));
+          write(fdcli, &ntemp, sizeof(ntemp));
+          write(fdcli, temp, sizeof(Item) * ntemp);
+          free(temp);
         }
         close(fdcli);
       }
     }
   } while (data->continua);
+  
+  free(Items);
   pthread_exit(NULL);
 }
 
