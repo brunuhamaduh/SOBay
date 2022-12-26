@@ -102,11 +102,11 @@ void *recebe(void *pdata)
   {
     read(data->caixa, comando, sizeof(comando));
     read(data->caixa, &feedback, sizeof(feedback));
-    if(strcmp(comando, "add") == 0)
+    if(strcmp(comando, "add") == 0 || strcmp(comando, "cash") == 0)
     {
       printf("[SALDO] = %d\nComando: ", feedback);
-      fflush(stdout);
     }
+    fflush(stdout);
   } while (data->continua);
   pthread_exit(NULL);
 }

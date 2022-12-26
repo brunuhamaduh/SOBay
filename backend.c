@@ -62,16 +62,22 @@ void *trata_login(void *pdata)
       }
       else
       {
+        fdcli = open(NomeCli, O_WRONLY);
         if(strcmp(user.input[0], "add") == 0)
         {
           feedback = getUserBalance(user.Username) + atoi(user.input[1]);
           updateUserBalance(user.Username, feedback);
           saveUsersFile("Ficheiros/Users.txt"); 
-          fdcli = open(NomeCli, O_WRONLY);
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &feedback, sizeof(feedback));
-          close(fdcli);
         }
+        else if(strcmp(user.input[0], "cash") == 0)
+        {
+          feedback = getUserBalance(user.Username);
+          write(fdcli, user.input[0], sizeof(user.input[0]));
+          write(fdcli, &feedback, sizeof(feedback));
+        }
+        close(fdcli);
       }
     }
   } while (data->continua);
