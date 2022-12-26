@@ -44,7 +44,7 @@ void *recebe(void *pdata)
       read(data->caixa, &feedback, sizeof(feedback));
       printf("[ID do item] = %d\nComando: ", feedback);
     }
-    else if(strcmp(comando, "list") == 0 || strcmp(comando, "licat") == 0 || strcmp(comando, "lisel") == 0)
+    else if(strcmp(comando, "list") == 0 || strcmp(comando, "licat") == 0 || strcmp(comando, "lisel") == 0 || strcmp(comando, "lival") == 0)
     {
       char comando2[20];
       read(data->caixa, &feedback, sizeof(feedback));
@@ -59,6 +59,8 @@ void *recebe(void *pdata)
           printf(" por %s]\n", comando2);
         else if(strcmp(comando, "list") == 0)
           printf("]\n");
+        else if(strcmp(comando, "lival") == 0)
+          printf(" até %s euros\n", comando2);
 
         printf("|ID|NOME PRODUTO|CATEGORIA|PRECOB|PRECOA|SEC|SELLER|HBidder|\n");
         item = realloc(item, sizeof(Item) * feedback);
@@ -77,6 +79,8 @@ void *recebe(void *pdata)
           printf("Nao existe produtos a serem vendidos por este utilizador\n");
         else if(strcmp(comando, "list") == 0)
           printf("Nao existe produtos a serem vendidos\n");
+        else if(strcmp(comando, "lival") == 0)
+          printf("Nao existe produtos a serem vendidos abaixo deste preco\n");
 
         printf("Comando: ");
       }

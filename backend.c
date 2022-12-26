@@ -160,6 +160,27 @@ void *trata_login(void *pdata)
           write(fdcli, temp, sizeof(Item) * ntemp);
           free(temp);
         }
+        else if(strcmp(user.input[0], "lival") == 0)
+        {
+          Item *temp = malloc(0);
+          int ntemp = 0;
+          
+          for(int i = 0; i < nitems; i++)
+          {
+            if(Items[i].preco_agora <= atoi(user.input[1]) || Items[i].preco_base <= atoi(user.input[1]))
+            {
+              ntemp++;
+              temp = realloc(temp, sizeof(Item) * ntemp);
+              temp[ntemp - 1] = Items[i];
+            }
+          }
+          
+          write(fdcli, user.input[0], sizeof(user.input[0]));
+          write(fdcli, &ntemp, sizeof(ntemp));
+          write(fdcli, user.input[1], sizeof(user.input[1]));
+          write(fdcli, temp, sizeof(Item) * ntemp);
+          free(temp);
+        }
         close(fdcli);
       }
     }
