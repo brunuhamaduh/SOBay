@@ -23,17 +23,26 @@ void *trata_pipe(void *pdata)
   User user;
   int n;
   int nclientes = 0;
+  int fdcli;
+  int feedback;
+  char NomeCli[10];
   loadUsersFile("Ficheiros/Users.txt");
+
   do
   {
     n = read(data->bf, &user, sizeof(User));
     if(n == sizeof(User))
     {
-      pthread_mutex_lock(data->wait);
+      sprintf(NomeCli, "CLI%d", user.pid);
       int check = isUserValid(user.Username, user.Password);
       if(check == 1 && nclientes < 20 && user.intent == 1)
       {
         data->cliente[nclientes++] = user.pid;
+        
+        feedback = 1;
+        fdcli = open(NomeCli, O_WRONLY);
+        write(fdcli, &feedback, sizeof(feedback));
+        close(fdcli);
       }
       else if(user.intent == 0)
       {
@@ -46,7 +55,13 @@ void *trata_pipe(void *pdata)
           }
         }
       }
-      pthread_mutex_unlock(data->wait);
+      else
+      {
+        feedback = 0;
+        fdcli = open(NomeCli, O_WRONLY);
+        write(fdcli, &feedback, sizeof(feedback));
+        close(fdcli);
+      }
     }
   } while (data->continua);
   pthread_exit(NULL);
@@ -78,20 +93,10 @@ int main(int argc, char *argv[], char *env[])
 
   pthread_create(&thread[0], NULL, trata_pipe, &data[0]);
   
-  printf("Comandos disponiveis\n");
-  printf("------------------------\n");
-  printf("users\n");
-  printf("list\n"); //ONLY ONE (id, nome item, categoria, preço atual, preço compre já, vendedor, licitador mais elevado ou menos elevado)
-  printf("kick <username>\n");
-  printf("prom\n");
-  printf("reprom\n");
-  printf("cancel <nome-do-executavel-do-promotor>\n");
-  printf("items\n");
-  printf("close\n");
-  printf("------------------------\n");
-  
   do
   {
+    printf("Comando: ");
+    fflush(stdout);
     fgets(comando, MAX, stdin);
     comando[strcspn(comando, "\n")] = '\0'; //retira a newline do fgets;
     

@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include "Header/sharedlib.h"
 
 #define MAX 100
@@ -76,8 +77,8 @@ void VerificaComando(char *string)
 
 int main(int argc, char* argv[])
 {
-  int Res, estado, send[2], child, bf;
-  char comando[MAX];
+  int Res, estado, send[2], child, bf, caixa, feedback;
+  char comando[MAX], NomeCaixa[10];
   User user;
 
   if(argc != 3)
@@ -88,30 +89,34 @@ int main(int argc, char* argv[])
 	  Abort("[ERRO] Servidor fechado...\n");
   }
 
-  bf = open("BF", O_RDWR);
+  user.pid = getpid();
+  sprintf(NomeCaixa, "CLI%d", user.pid);
+  mkfifo(NomeCaixa, 0666);
+
+  bf = open("BF", O_WRONLY);
 
   strcpy(user.Username, argv[1]);
   strcpy(user.Password, argv[2]);
-  user.pid = getpid();
   user.intent = 1;
   write(bf, &user, sizeof(User));
 
-  printf("Comandos disponiveis\n");
-  printf("sell <nome> <categoria> <preco-base> <preco-compre-ja> <duração>\n");
-  printf("list\n");
-  printf("licat <nome-categoria>\n");
-  printf("lisel <username do vendedor>\n");
-  printf("lival <preço-máximo>\n");
-  printf("litime <hora-em-segundos>\n");
-  printf("time\n");
-  printf("buy <id> <valor>\n");
-  printf("cash\n");
-  printf("add <valor>\n");
-  printf("exit\n");
+  caixa = open(NomeCaixa, O_RDONLY);
+  read(caixa, &feedback, sizeof(feedback));
+  
+  if(feedback != 1)
+  {
+    close(bf);
+    close(caixa);
+    unlink(NomeCaixa);
+    Abort("Utilizador nao existe\n");
+  }
+
+  printf("Welcome '%s'\n", user.Username);
 
   do
   {
     printf("Comando: ");
+    fflush(stdout);
     fgets(comando, MAX, stdin);
     comando[strcspn(comando, "\n")] = '\0'; //tira "\n" do input;
     VerificaComando(comando);
@@ -119,5 +124,9 @@ int main(int argc, char* argv[])
 
   user.intent = 0;
   write(bf, &user, sizeof(User));
+  
+  close(caixa);
+  close(bf);
+  unlink(NomeCaixa);
   return 0;
 }
