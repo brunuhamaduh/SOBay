@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
 
   strcpy(user.Username, argv[1]);
   strcpy(user.Password, argv[2]);
-  user.intent = 1;
+  strcpy(user.input, "login");
   write(bf, &user, sizeof(User));
 
   caixa = open(NomeCaixa, O_RDONLY);
@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
     VerificaComando(comando);
   } while(strcmp(comando, "exit") != 0);
 
-  user.intent = 0;
+  strcpy(user.input, "logout");
   write(bf, &user, sizeof(User));
   
   close(caixa);

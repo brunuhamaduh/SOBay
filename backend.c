@@ -35,7 +35,7 @@ void *trata_pipe(void *pdata)
     {
       sprintf(NomeCli, "CLI%d", user.pid);
       int check = isUserValid(user.Username, user.Password);
-      if(check == 1 && nclientes < 20 && user.intent == 1)
+      if(check == 1 && nclientes < 20 && strcmp(user.input, "login") == 0)
       {
         data->cliente[nclientes++] = user.pid;
         
@@ -44,7 +44,7 @@ void *trata_pipe(void *pdata)
         write(fdcli, &feedback, sizeof(feedback));
         close(fdcli);
       }
-      else if(user.intent == 0)
+      else if(strcmp(user.input, "logout") == 0)
       {
         for(int i = 0; i < nclientes; i++)
         {
