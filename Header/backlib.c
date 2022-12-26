@@ -38,7 +38,7 @@ int VerificaComando(char *string)
   return 0;
 }
 
-int saveItemsFile(char * filename, struct Item *Items, int Num_Items)
+int saveItemsFile(char * filename, Item *Items, int Num_Items)
 {
   FILE *fp;
 
@@ -55,7 +55,7 @@ int saveItemsFile(char * filename, struct Item *Items, int Num_Items)
   return 0;
 }
 
-int loadItemsFile(char *pathname, struct Item **Items)
+int loadItemsFile(char *pathname, Item **Items)
 {
   FILE *fp;
   int i = 0;
@@ -67,7 +67,7 @@ int loadItemsFile(char *pathname, struct Item **Items)
   
   while(fgets(buffer, sizeof(buffer), fp) != NULL)
   {
-    *Items = realloc(*Items, (i+1) * sizeof(struct Item));
+    *Items = realloc(*Items, (i+1) * sizeof(Item));
     sscanf(buffer, "%d%s%s%d%d%d", &(*Items)[i].ID, (*Items)[i].Nome, (*Items)[i].Categoria, &(*Items)[i].preco_base, &(*Items)[i].preco_agora, &(*Items)[i].duracao);
     i++;
   }

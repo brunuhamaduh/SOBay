@@ -20,12 +20,15 @@ typedef struct
 void *trata_login(void *pdata)
 {
   USER_DATA *data = pdata;
+  Item *Items = malloc(0);
   User user;
   int n;
+  int nitems = 0;
   int nclientes = 0;
   int fdcli;
   int feedback;
   char NomeCli[10];
+  nitems = loadItemsFile("Ficheiros/Items.txt", &Items);
   loadUsersFile("Ficheiros/Users.txt");
 
   do
@@ -77,6 +80,31 @@ void *trata_login(void *pdata)
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &feedback, sizeof(feedback));
         }
+        else if(strcmp(user.input[0], "time") == 0)
+        {
+          time_t now = time(NULL);
+          struct tm *tm_struct = localtime(&now);
+          int hour = tm_struct->tm_hour;
+          int minute = tm_struct->tm_min;
+          int sec = tm_struct->tm_sec;
+          feedback = (hour * 60 + minute) * 60 + sec;
+          write(fdcli, user.input[0], sizeof(user.input[0]));
+          write(fdcli, &feedback, sizeof(feedback));
+        }
+        else if(strcmp(user.input[0], "sell") == 0)
+        {
+          nitems++;
+          Items = realloc(Items, nitems * sizeof(Item));
+          Items[nitems - 1].ID = nitems;
+          strcpy(Items[nitems - 1].Nome, user.input[1]); 
+          strcpy(Items[nitems - 1].Categoria, user.input[2]);
+          Items[nitems - 1].preco_base = atoi(user.input[3]);
+          Items[nitems - 1].preco_agora = atoi(user.input[4]);
+          Items[nitems - 1].duracao = atoi(user.input[5]);
+          write(fdcli, user.input[0], sizeof(user.input[0]));
+          write(fdcli, &Items[nitems - 1].ID, sizeof(Items[nitems - 1].ID));
+          saveItemsFile("Ficheiros/Items.txt", Items, nitems);
+        }
         close(fdcli);
       }
     }
@@ -86,17 +114,17 @@ void *trata_login(void *pdata)
 
 int main(int argc, char *argv[], char *env[])
 {
-  char comando[MAX], Userfilename[30], Itemfilename[30];
+  char comando[MAX];
   int cliente[20] = {0};
-  int Res, Num_Items, bf;
+  int Res, bf;
   
   USER_DATA data[2];
   pthread_mutex_t wait;
   pthread_t thread[2];
   User temp;
   
-  struct Item *Items = malloc(0);
-  getFileNames(env, Userfilename, Itemfilename);
+  
+  //getFileNames(env, Userfilename, Itemfilename);
 
   mkfifo("BF", 0666);
   bf = open("BF", O_RDWR);
@@ -166,18 +194,6 @@ int main(int argc, char *argv[], char *env[])
             printf(" %d", cliente[i]);
         }
         printf(" ]\n");
-      }
-
-      else if(strcmp(comando, "items") == 0)
-      {
-        Num_Items = loadItemsFile(Itemfilename, &Items);
-        if(Num_Items == -1)
-          exit(-1);
-        
-        printf("[Items] Lido com sucesso\n");
-        printf("ID Nome Categoria Preco_Base Preco_Agora Duracao\n");
-        for(int i = 0; i < Num_Items; i++)
-          printf("%d %s %s %d %d %d\n", Items[i].ID, Items[i].Nome, Items[i].Categoria, Items[i].preco_base, Items[i].preco_agora, Items[i].duracao);
       }
     }
   } while(strcmp(comando, "close") != 0);

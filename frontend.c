@@ -101,10 +101,20 @@ void *recebe(void *pdata)
   do
   {
     read(data->caixa, comando, sizeof(comando));
-    read(data->caixa, &feedback, sizeof(feedback));
     if(strcmp(comando, "add") == 0 || strcmp(comando, "cash") == 0)
     {
+      read(data->caixa, &feedback, sizeof(feedback));
       printf("[SALDO] = %d\nComando: ", feedback);
+    }
+    else if(strcmp(comando, "time") == 0)
+    {
+      read(data->caixa, &feedback, sizeof(feedback));
+      printf("[TIME] = %d\nComando: ", feedback);
+    }
+    else if(strcmp(comando, "sell") == 0)
+    {
+      read(data->caixa, &feedback, sizeof(feedback));
+      printf("[ID do item] = %d\nComando: ", feedback);
     }
     fflush(stdout);
   } while (data->continua);
