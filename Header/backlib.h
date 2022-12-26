@@ -3,9 +3,10 @@
 
 typedef struct
 {
-  char Nome[20], Categoria[20];
+  char Nome[20], Categoria[20], seller[20], highestbidder[20];
   int preco_base, preco_agora;
   int ID, duracao;
+
 } Item;
 
 typedef struct 

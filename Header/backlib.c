@@ -49,7 +49,7 @@ int saveItemsFile(char * filename, Item *Items, int Num_Items)
 
   for(int i = 0; i < Num_Items; i++)
   {
-    fprintf(fp, "%d %s %s %d %d %d\n", Items[i].ID, Items[i].Nome, Items[i].Categoria, Items[i].preco_base, Items[i].preco_agora, Items[i].duracao);
+    fprintf(fp, "%d %s %s %d %d %d %s %s\n", Items[i].ID, Items[i].Nome, Items[i].Categoria, Items[i].preco_base, Items[i].preco_agora, Items[i].duracao, Items[i].seller, Items[i].highestbidder);
   }
 
   fclose(fp);
@@ -69,7 +69,7 @@ int loadItemsFile(char *pathname, Item **Items)
   while(fgets(buffer, sizeof(buffer), fp) != NULL)
   {
     *Items = realloc(*Items, (i+1) * sizeof(Item));
-    sscanf(buffer, "%d%s%s%d%d%d", &(*Items)[i].ID, (*Items)[i].Nome, (*Items)[i].Categoria, &(*Items)[i].preco_base, &(*Items)[i].preco_agora, &(*Items)[i].duracao);
+    sscanf(buffer, "%d%s%s%d%d%d%s%s", &(*Items)[i].ID, (*Items)[i].Nome, (*Items)[i].Categoria, &(*Items)[i].preco_base, &(*Items)[i].preco_agora, &(*Items)[i].duracao, (*Items)[i].seller, (*Items)[i].highestbidder);
     i++;
   }
 

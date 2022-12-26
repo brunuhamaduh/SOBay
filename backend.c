@@ -12,7 +12,9 @@ typedef struct
 {
   int continua;
   int bf;
+  int *nclientes;
   int *cliente;
+  char **nomecliente;
   pthread_mutex_t *wait;
 } USER_DATA;
 
@@ -23,7 +25,6 @@ void *trata_login(void *pdata)
   User user;
   int n;
   int nitems = 0;
-  int nclientes = 0;
   int fdcli;
   int feedback;
   char NomeCli[10];
@@ -36,9 +37,11 @@ void *trata_login(void *pdata)
     if(n == sizeof(User))
     {
       sprintf(NomeCli, "CLI%d", user.pid);
-      if(isUserValid(user.Username, user.Password) == 1 && nclientes < 20 && strcmp(user.input[0], "login") == 0)
+      if(isUserValid(user.Username, user.Password) == 1 && *(data->nclientes) < 20 && strcmp(user.input[0], "login") == 0)
       {
-        data->cliente[nclientes++] = user.pid;
+        *(data->nclientes) = *(data->nclientes) + 1;
+        data->cliente[*(data->nclientes) - 1] = user.pid;
+        data->nomecliente[*(data->nclientes) - 1] = user.Username;
         feedback = 1;
         fdcli = open(NomeCli, O_WRONLY);
         write(fdcli, &feedback, sizeof(feedback));
@@ -46,16 +49,18 @@ void *trata_login(void *pdata)
       }
       else if(strcmp(user.input[0], "exit") == 0)
       {
-        for(int i = 0; i < nclientes; i++)
+        for(int i = 0; i < *(data->nclientes); i++)
         {
           if(data->cliente[i] == user.pid)
           {
             data->cliente[i] = 0;
+            data->nomecliente[i] = 0;
+            *(data->nclientes) = *(data->nclientes) - 1;
             break;
           }
         }
       }
-      else if((isUserValid(user.Username, user.Password) == 0 || nclientes > 20) && strcmp(user.input[0], "login") == 0)
+      else if((isUserValid(user.Username, user.Password) == 0 || *(data->nclientes) > 20) && strcmp(user.input[0], "login") == 0)
       {
         feedback = 0;
         fdcli = open(NomeCli, O_WRONLY);
@@ -100,6 +105,8 @@ void *trata_login(void *pdata)
           Items[nitems - 1].preco_base = atoi(user.input[3]);
           Items[nitems - 1].preco_agora = atoi(user.input[4]);
           Items[nitems - 1].duracao = atoi(user.input[5]);
+          strcpy(Items[nitems - 1].seller, "temp");
+          strcpy(Items[nitems - 1].highestbidder, "-");
           saveItemsFile("Ficheiros/Items.txt", Items, nitems);
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &Items[nitems - 1].ID, sizeof(Items[nitems - 1].ID));
@@ -143,13 +150,14 @@ int main(int argc, char *argv[], char *env[])
 {
   char comando[MAX];
   int cliente[20] = {0};
+  int nclientes = 0;
+  char *nomecliente[20] = {'\0'};
   int Res, bf;
   
-  USER_DATA data[2];
+  USER_DATA data;
   pthread_mutex_t wait;
-  pthread_t thread[2];
+  pthread_t thread;
   User temp;
-  
   
   //getFileNames(env, Userfilename, Itemfilename);
 
@@ -158,12 +166,14 @@ int main(int argc, char *argv[], char *env[])
 
   pthread_mutex_init(&wait, NULL);
   
-  data[0].continua = 1;
-  data[0].bf = bf;
-  data[0].cliente = cliente;
-  data[0].wait = &wait;
+  data.continua = 1;
+  data.bf = bf;
+  data.cliente = cliente;
+  data.nclientes = &nclientes;
+  data.nomecliente = nomecliente;
+  data.wait = &wait;
 
-  pthread_create(&thread[0], NULL, trata_login, &data[0]);
+  pthread_create(&thread, NULL, trata_login, &data);
   
   do
   {
@@ -215,19 +225,19 @@ int main(int argc, char *argv[], char *env[])
       }
       else if(strcmp(comando, "users") == 0)
       {
-        printf("CLIENTES = [");
-        for(int i = 0; i < 20; i++)
-        { 
-            printf(" %d", cliente[i]);
+        printf("Clientes Online\n");
+        for(int i = 0; i < nclientes; i++)
+        {
+          printf("%s ", nomecliente[i]);
+          fflush(stdout);
         }
-        printf(" ]\n");
       }
     }
   } while(strcmp(comando, "close") != 0);
 
-  data[0].continua = 0;
+  data.continua = 0;
   write(bf, &temp, sizeof(User));
-  pthread_join(thread[0], NULL);
+  pthread_join(thread, NULL);
 
   pthread_mutex_destroy(&wait);
 
