@@ -107,6 +107,11 @@ void *recebe(void *pdata)
 
       printf("Comando: ");
     }
+    else if(strcmp(comando, "newitem") == 0)
+    {
+      printf("NEW ITEM\n");
+      printf("Comando: ");
+    }
     fflush(stdout);
   } while (data->continua);
   free(item);
@@ -134,7 +139,7 @@ int main(int argc, char* argv[])
   sprintf(NomeCaixa, "CLI%d", user.pid);
   mkfifo(NomeCaixa, 0666);
 
-  bf = open("BF", O_RDWR);
+  bf = open("BF", O_WRONLY);
 
   strcpy(user.Username, argv[1]);
   strcpy(user.Password, argv[2]);

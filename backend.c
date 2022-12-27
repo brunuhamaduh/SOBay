@@ -29,6 +29,7 @@ void *trata_login(void *pdata)
   int feedback;
   int lastID;
   char NomeCli[10];
+  char comando[20];
   char Nomes[20][20];
   nitems = loadItemsFile("Ficheiros/Items.txt", &Items, &lastID);
   loadUsersFile("Ficheiros/Users.txt");
@@ -74,8 +75,6 @@ void *trata_login(void *pdata)
             break;
           }
         }
-
-
       }
       else if((isUserValid(user.Username, user.Password) == 0 || *(data->nclientes) > 20) && strcmp(user.input[0], "login") == 0)
       {
@@ -127,6 +126,15 @@ void *trata_login(void *pdata)
           saveItemsFile("Ficheiros/Items.txt", Items, nitems);
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &Items[nitems - 1].ID, sizeof(Items[nitems - 1].ID));
+          close(fdcli);
+          for(int i = 0; i < *(data->nclientes); i++)
+          {
+            sprintf(NomeCli, "CLI%d", data->cliente[i]);
+            fdcli = open(NomeCli, O_WRONLY);
+            strcpy(comando, "newitem");
+            write(fdcli, comando, sizeof(comando));
+            close(fdcli);
+          }
         }
         else if(strcmp(user.input[0], "list") == 0)
         {
