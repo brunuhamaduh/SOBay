@@ -10,6 +10,7 @@
 
 typedef struct
 {
+  int *tempo;
   int continua;
   int bf;
   int *nclientes;
@@ -18,7 +19,7 @@ typedef struct
   pthread_mutex_t *wait;
 } USER_DATA;
 
-void *trata_login(void *pdata)
+void *trata_comandos(void *pdata)
 {
   USER_DATA *data = pdata;
   Item *Items = malloc(0);
@@ -102,7 +103,9 @@ void *trata_login(void *pdata)
         }
         else if(strcmp(user.input[0], "time") == 0)
         {
-
+          feedback = *data->tempo;
+          write(fdcli, user.input[0], sizeof(user.input[0]));
+          write(fdcli, &feedback, sizeof(feedback));
         }
         else if(strcmp(user.input[0], "sell") == 0)
         {
@@ -304,6 +307,41 @@ void *trata_login(void *pdata)
   pthread_exit(NULL);
 }
 
+void *trata_segundos(void *pdata)
+{
+  USER_DATA *data = pdata;
+  FILE *fp;
+  char buffer[100];
+
+  fp = fopen("Ficheiros/tempo.txt", "r");
+  
+  if(fp == NULL)
+    printf("Primeira vez que plataforma esta a ser iniciada...\n");
+  else
+  {
+    while(fgets(buffer, sizeof(buffer), fp) != NULL)
+      sscanf(buffer, "%d", data->tempo);
+    fclose(fp);
+  }
+  
+  do
+  {
+    sleep(1);
+    *data->tempo = *data->tempo + 1;
+  } while (data->continua);
+
+  fp = fopen("Ficheiros/tempo.txt", "w");
+  if(fp == NULL)
+    printf("Nao foi possivel guardar o tempo da plataforma...\n");
+  else
+  {
+    fprintf(fp, "%d", *data->tempo);
+    fclose(fp);
+  }
+  
+  pthread_exit(NULL);
+}
+
 int main(int argc, char *argv[], char *env[])
 {
   char comando[MAX];
@@ -311,10 +349,11 @@ int main(int argc, char *argv[], char *env[])
   int nclientes = 0;
   char *nomecliente[20] = {'\0'};
   int Res, bf;
+  int tempo;
   
   USER_DATA data;
   pthread_mutex_t wait;
-  pthread_t thread;
+  pthread_t thread[2];
   User temp;
   
   //getFileNames(env, Userfilename, Itemfilename);
@@ -326,13 +365,15 @@ int main(int argc, char *argv[], char *env[])
   
   data.continua = 1;
   data.bf = bf;
+  data.tempo = &tempo;
   data.cliente = cliente;
   data.nclientes = &nclientes;
   data.nomecliente = nomecliente;
   data.wait = &wait;
 
-  pthread_create(&thread, NULL, trata_login, &data);
-  
+  pthread_create(&thread[0], NULL, trata_comandos, &data);
+  pthread_create(&thread[1], NULL, trata_segundos, &data);
+
   printf("Welcome Admin\n");
 
   do
@@ -395,7 +436,8 @@ int main(int argc, char *argv[], char *env[])
 
   data.continua = 0;
   write(bf, &temp, sizeof(User));
-  pthread_join(thread, NULL);
+  pthread_join(thread[0], NULL);
+  pthread_join(thread[1], NULL);
   pthread_mutex_destroy(&wait);
 
   char NomeCli[20];
@@ -406,7 +448,6 @@ int main(int argc, char *argv[], char *env[])
     sprintf(NomeCli, "CLI%d", cliente[i]);
     fdcli = open(NomeCli, O_WRONLY);
     strcpy(comando, "serverlogout");
-    write(fdcli, comando, sizeof(comando));
     write(fdcli, comando, sizeof(comando));
     close(fdcli);
   }
