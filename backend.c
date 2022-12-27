@@ -11,6 +11,8 @@
 typedef struct
 {
   int *tempo;
+  Item *Items;
+  int nitems;
   int continua;
   int bf;
   int *nclientes;
@@ -22,17 +24,16 @@ typedef struct
 void *trata_comandos(void *pdata)
 {
   USER_DATA *data = pdata;
-  Item *Items = malloc(0);
+  data->Items = malloc(0);
   User user;
   int n;
-  int nitems = 0;
   int fdcli;
   int feedback;
   int lastID;
   char NomeCli[10];
   char comando[20];
   char Nomes[20][20];
-  nitems = loadItemsFile("Ficheiros/Items.txt", &Items, &lastID);
+  data->nitems = loadItemsFile("Ficheiros/Items.txt", &data->Items, &lastID);
   loadUsersFile("Ficheiros/Users.txt");
 
   do
@@ -109,19 +110,19 @@ void *trata_comandos(void *pdata)
         }
         else if(strcmp(user.input[0], "sell") == 0)
         {
-          nitems++;
-          Items = realloc(Items, nitems * sizeof(Item));
-          Items[nitems - 1].ID = ++lastID;
-          strcpy(Items[nitems - 1].Nome, user.input[1]); 
-          strcpy(Items[nitems - 1].Categoria, user.input[2]);
-          Items[nitems - 1].preco_base = atoi(user.input[3]);
-          Items[nitems - 1].preco_agora = atoi(user.input[4]);
-          Items[nitems - 1].duracao = atoi(user.input[5]);
-          strcpy(Items[nitems - 1].seller, user.Username);
-          strcpy(Items[nitems - 1].highestbidder, "-");
-          saveItemsFile("Ficheiros/Items.txt", Items, nitems);
+          data->nitems = data->nitems + 1;
+          data->Items = realloc(data->Items, data->nitems * sizeof(Item));
+          data->Items[data->nitems - 1].ID = ++lastID;
+          strcpy(data->Items[data->nitems - 1].Nome, user.input[1]); 
+          strcpy(data->Items[data->nitems - 1].Categoria, user.input[2]);
+          data->Items[data->nitems - 1].preco_base = atoi(user.input[3]);
+          data->Items[data->nitems - 1].preco_agora = atoi(user.input[4]);
+          data->Items[data->nitems - 1].duracao = atoi(user.input[5]);
+          strcpy(data->Items[data->nitems - 1].seller, user.Username);
+          strcpy(data->Items[data->nitems - 1].highestbidder, "-");
+          saveItemsFile("Ficheiros/Items.txt", data->Items, data->nitems);
           write(fdcli, user.input[0], sizeof(user.input[0]));
-          write(fdcli, &Items[nitems - 1].ID, sizeof(Items[nitems - 1].ID));
+          write(fdcli, &data->Items[data->nitems - 1].ID, sizeof(data->Items[data->nitems - 1].ID));
           close(fdcli);
           for(int i = 0; i < *(data->nclientes); i++)
           {
@@ -130,7 +131,7 @@ void *trata_comandos(void *pdata)
             strcpy(comando, "newitem");
             write(fdcli, comando, sizeof(comando));
             Item *temp = malloc(sizeof(Item));
-            *temp = Items[nitems - 1];
+            *temp = data->Items[data->nitems - 1];
             write(fdcli, temp, sizeof(Item));
             free(temp);
             close(fdcli);
@@ -139,25 +140,24 @@ void *trata_comandos(void *pdata)
         else if(strcmp(user.input[0], "list") == 0)
         {
           write(fdcli, user.input[0], sizeof(user.input[0]));
-          write(fdcli, &nitems, sizeof(nitems));
+          write(fdcli, &data->nitems, sizeof(data->nitems));
           write(fdcli, user.input[0], sizeof(user.input[0]));
-          write(fdcli, Items, sizeof(Item) * nitems);
+          write(fdcli, data->Items, sizeof(Item) * data->nitems);
         }
         else if(strcmp(user.input[0], "licat") == 0)
         {
           Item *temp = malloc(0);
           int ntemp = 0;
           
-          for(int i = 0; i < nitems; i++)
+          for(int i = 0; i < data->nitems; i++)
           {
-            if(strcmp(Items[i].Categoria, user.input[1]) == 0)
+            if(strcmp(data->Items[i].Categoria, user.input[1]) == 0)
             {
               ntemp++;
               temp = realloc(temp, sizeof(Item) * ntemp);
-              temp[ntemp - 1] = Items[i];
+              temp[ntemp - 1] = data->Items[i];
             }
           }
-          
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &ntemp, sizeof(ntemp));
           write(fdcli, user.input[1], sizeof(user.input[1]));
@@ -169,16 +169,15 @@ void *trata_comandos(void *pdata)
           Item *temp = malloc(0);
           int ntemp = 0;
           
-          for(int i = 0; i < nitems; i++)
+          for(int i = 0; i < data->nitems; i++)
           {
-            if(strcmp(Items[i].seller, user.input[1]) == 0)
+            if(strcmp(data->Items[i].seller, user.input[1]) == 0)
             {
               ntemp++;
               temp = realloc(temp, sizeof(Item) * ntemp);
-              temp[ntemp - 1] = Items[i];
+              temp[ntemp - 1] = data->Items[i];
             }
           }
-          
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &ntemp, sizeof(ntemp));
           write(fdcli, user.input[1], sizeof(user.input[1]));
@@ -190,16 +189,15 @@ void *trata_comandos(void *pdata)
           Item *temp = malloc(0);
           int ntemp = 0;
           
-          for(int i = 0; i < nitems; i++)
+          for(int i = 0; i < data->nitems; i++)
           {
-            if(Items[i].preco_base <= atoi(user.input[1]))
+            if(data->Items[i].preco_base <= atoi(user.input[1]))
             {
               ntemp++;
               temp = realloc(temp, sizeof(Item) * ntemp);
-              temp[ntemp - 1] = Items[i];
+              temp[ntemp - 1] = data->Items[i];
             }
           }
-          
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &ntemp, sizeof(ntemp));
           write(fdcli, user.input[1], sizeof(user.input[1]));
@@ -211,16 +209,15 @@ void *trata_comandos(void *pdata)
           Item *temp = malloc(0);
           int ntemp = 0;
           
-          for(int i = 0; i < nitems; i++)
+          for(int i = 0; i < data->nitems; i++)
           {
-            if(Items[i].duracao <= atoi(user.input[1]))
+            if(data->Items[i].duracao <= atoi(user.input[1]))
             {
               ntemp++;
               temp = realloc(temp, sizeof(Item) * ntemp);
-              temp[ntemp - 1] = Items[i];
+              temp[ntemp - 1] = data->Items[i];
             }
           }
-          
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &ntemp, sizeof(ntemp));
           write(fdcli, user.input[1], sizeof(user.input[1]));
@@ -237,11 +234,11 @@ void *trata_comandos(void *pdata)
           }
           else
           {
-            for(int i = 0; i < nitems; i++)
+            for(int i = 0; i < data->nitems; i++)
             {
-              if(Items[i].ID == atoi(user.input[1]) && atoi(user.input[2]) >= Items[i].preco_agora && Items[i].preco_agora != 0)
+              if(data->Items[i].ID == atoi(user.input[1]) && atoi(user.input[2]) >= data->Items[i].preco_agora && data->Items[i].preco_agora != 0)
               {
-                if(strcmp(Items[i].seller, user.Username) == 0)
+                if(strcmp(data->Items[i].seller, user.Username) == 0)
                   strcpy(feedback2, "Own Buy");
                 else
                 {
@@ -249,44 +246,42 @@ void *trata_comandos(void *pdata)
                   int j;
                   Item *temp;
                   
-                  updateUserBalance(user.Username, getUserBalance(user.Username) - Items[i].preco_agora);
-                  nitems--;
-                  temp = malloc(nitems * sizeof(Item));
+                  updateUserBalance(user.Username, getUserBalance(user.Username) - data->Items[i].preco_agora);
+                  data->nitems = data->nitems - 1;
+                  temp = malloc(data->nitems * sizeof(Item));
                   
                   for(j = 0; j < i; j++)
                   {
-                    temp[j] = Items[j];
+                    temp[j] = data->Items[j];
                   }
 
-                  for(int k = j+1; j < nitems; j++, k++)
+                  for(int k = j+1; j < data->nitems; j++, k++)
                   {
-                    temp[j] = Items[k];
+                    temp[j] = data->Items[k];
                   }
-
-                  Items = realloc(Items, nitems * sizeof(Item));
-                  Items = temp;
+                  saveItemsFile("Ficheiros/Items.txt", temp, data->nitems);
+                  data->Items = realloc(data->Items, data->nitems * sizeof(Item));
+                  data->Items = temp;
                   free(temp);
-
-                  saveItemsFile("Ficheiros/Items.txt", Items, nitems);
                   saveUsersFile("Ficheiros/Users.txt");
                 }
                 break;
               }
-              else if(Items[i].ID == atoi(user.input[1]) && (atoi(user.input[2]) < Items[i].preco_agora || Items[i].preco_agora == 0) && atoi(user.input[2]) > Items[i].preco_base)
+              else if(data->Items[i].ID == atoi(user.input[1]) && (atoi(user.input[2]) < data->Items[i].preco_agora || data->Items[i].preco_agora == 0) && atoi(user.input[2]) > data->Items[i].preco_base)
               {
-                if(strcmp(Items[i].seller, user.Username) == 0)
+                if(strcmp(data->Items[i].seller, user.Username) == 0)
                   strcpy(feedback2, "Own Buy");
                 else
                 {
                   strcpy(feedback2, "Success");
-                  strcpy(Items[i].highestbidder, user.Username);
-                  Items[i].preco_base = atoi(user.input[2]);
-                  saveItemsFile("Ficheiros/Items.txt", Items, nitems); 
+                  strcpy(data->Items[i].highestbidder, user.Username);
+                  data->Items[i].preco_base = atoi(user.input[2]);
+                  saveItemsFile("Ficheiros/Items.txt", data->Items, data->nitems); 
                 }
               }
-              else if(Items[i].ID == atoi(user.input[1]) && atoi(user.input[2]) <= Items[i].preco_base)
+              else if(data->Items[i].ID == atoi(user.input[1]) && atoi(user.input[2]) <= data->Items[i].preco_base)
               {
-                if(strcmp(Items[i].seller, user.Username) == 0)
+                if(strcmp(data->Items[i].seller, user.Username) == 0)
                   strcpy(feedback2, "Own Buy");
                 else
                   strcpy(feedback2, "Low price");
@@ -302,8 +297,7 @@ void *trata_comandos(void *pdata)
       }
     }
   } while (data->continua);
-  
-  free(Items);
+
   pthread_exit(NULL);
 }
 
@@ -328,6 +322,36 @@ void *trata_segundos(void *pdata)
   {
     sleep(1);
     *data->tempo = *data->tempo + 1;
+    loadUsersFile("Ficheiros/Users.txt");
+
+    for(int i = 0; i < data->nitems; i++)
+    {
+      data->Items[i].duracao = data->Items[i].duracao - 1;
+      if(data->Items[i].duracao == 0)
+      {
+        Item *temp;
+        int j;
+        data->nitems = data->nitems - 1;
+        temp = malloc(data->nitems * sizeof(Item));
+
+        if(strcmp(data->Items[i].highestbidder, "-") != 0)
+          updateUserBalance(data->Items[i].highestbidder, getUserBalance(data->Items[i].highestbidder) - data->Items[i].preco_base);
+                  
+        for(j = 0; j < i; j++)
+        {
+          temp[j] = data->Items[j];
+        }
+        for(int k = j+1; j < data->nitems; j++, k++)
+        {
+          temp[j] = data->Items[k];
+        }
+        saveItemsFile("Ficheiros/Items.txt", temp, data->nitems);
+        data->Items = realloc(data->Items, data->nitems * sizeof(Item));
+        data->Items = temp;
+        free(temp);
+        saveUsersFile("Ficheiros/Users.txt");
+      }
+    }
   } while (data->continua);
 
   fp = fopen("Ficheiros/tempo.txt", "w");
