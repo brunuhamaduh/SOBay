@@ -113,26 +113,6 @@ void *recebe(void *pdata)
   pthread_exit(NULL);
 }
 
-void *avisos(void *pdata)
-{
-  USER_DATA *data = pdata;
-  int n;
-  char string[20];
-  do
-  {
-    //n = read(data->caixa, string, sizeof(string));
-    if(n == sizeof(string))
-    {
-      if(strcmp(string, "newitem") == 0)
-      {
-        printf("NOVO ITEM\n");
-      }
-    }
-  } while (data->continua);
-  
-  pthread_exit(NULL);
-}
-
 int main(int argc, char* argv[])
 {
   int bf, caixa, feedback;
@@ -140,7 +120,7 @@ int main(int argc, char* argv[])
   User user;
   USER_DATA data;
   pthread_mutex_t wait;
-  pthread_t thread[2];
+  pthread_t thread;
 
   if(argc != 3)
     Abort("[ERRO] Sintaxe Errada\nSintaxe Correta: ./frontend <USERNAME> <PASSWORD>\n");
@@ -180,8 +160,7 @@ int main(int argc, char* argv[])
   data.caixa = caixa;
   data.wait = &wait;
 
-  pthread_create(&thread[0], NULL, recebe, &data);
-  //pthread_create(&thread[1], NULL, avisos, &data);
+  pthread_create(&thread, NULL, recebe, &data);
 
   printf("Comando: ");
   fflush(stdout);
@@ -194,8 +173,7 @@ int main(int argc, char* argv[])
   } while(strcmp(comando, "exit") != 0);
 
   data.continua = 0;
-  pthread_join(thread[0], NULL);
-  pthread_join(thread[1], NULL);
+  pthread_join(thread, NULL);
 
   close(caixa);
   close(bf);

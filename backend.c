@@ -67,9 +67,15 @@ void *trata_login(void *pdata)
             }
 
             *(data->nclientes) = *(data->nclientes) - 1;
+            fdcli = open(NomeCli, O_WRONLY);
+            feedback = -1;
+            write(fdcli, &feedback, sizeof(feedback));
+            close(fdcli);
             break;
           }
         }
+
+
       }
       else if((isUserValid(user.Username, user.Password) == 0 || *(data->nclientes) > 20) && strcmp(user.input[0], "login") == 0)
       {
