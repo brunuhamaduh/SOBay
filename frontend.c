@@ -14,6 +14,7 @@ typedef struct
 {
   int continua;
   int caixa;
+  int forceExit;
   pthread_mutex_t *wait;
 } USER_DATA;
 
@@ -69,7 +70,6 @@ void *recebe(void *pdata)
         {
           printf("|%-2.2d|%-12.12s|%-9.9s|%-6.6d|%-6.6d|%-3.3d|%-6.6s|%-7.7s|\n", item[i].ID, item[i].Nome, item[i].Categoria, item[i].preco_base, item[i].preco_agora, item[i].duracao, item[i].seller, item[i].highestbidder);
         }
-        printf("Comando: ");
       }
       else
       {
@@ -83,8 +83,6 @@ void *recebe(void *pdata)
           printf("Nao existem produtos a serem vendidos abaixo deste preco\n");
         else if(strcmp(comando, "litime") == 0)
           printf("Nao existem produtos a serem vendidos abaixo destes segundos\n");
-
-        printf("Comando: ");
       }
     }
     else if(strcmp(comando, "buy") == 0)
@@ -104,16 +102,33 @@ void *recebe(void *pdata)
         printf("[AVISO] ID Invalido\n");
       else if(strcmp(feedback2, "Broke") == 0)
         printf("[AVISO] Nao tem saldo disponivel");
-
-      printf("Comando: ");
     }
     else if(strcmp(comando, "newitem") == 0)
     {
-      printf("NEW ITEM\n");
-      printf("Comando: ");
+      int n;
+      item = realloc(item, sizeof(Item));
+      n = read(data->caixa, item, sizeof(Item));
+      if(n == sizeof(Item))
+      {
+        printf("[Novo item a ser vendido]\n");
+        printf("ID: %d Nome: %s Categoria: %s Preco Atual: %d Preco Agora: ", item[0].ID, item[0].Nome, item[0].Categoria, item[0].preco_base);
+        if(item[0].preco_agora == 0)
+          printf("- ");
+        else
+          printf("%d ", item[0].preco_agora);
+        fflush(stdout);
+        printf("Duracao: %d\n", item[0].duracao);
+      }
+    }
+    else if(strcmp(comando, "serverlogout") == 0)
+    {
+      printf("SERVIDOR FECHOU!\n");
+      printf("Clique ENTER para sair...\n");
+      data->forceExit = 0;
     }
     fflush(stdout);
-  } while (data->continua);
+  } while (data->continua && data->forceExit);
+  
   free(item);
   pthread_exit(NULL);
 }
@@ -164,21 +179,24 @@ int main(int argc, char* argv[])
   data.continua = 1;
   data.caixa = caixa;
   data.wait = &wait;
+  data.forceExit = 1;
 
   pthread_create(&thread, NULL, recebe, &data);
 
-  printf("Comando: ");
-  fflush(stdout);
   do
   {
     fgets(comando, 100, stdin);
+    if(strcmp(comando, "\n") == 0)
+      continue;
     comando[strcspn(comando, "\n")] = '\0'; //tira "\n" do input;
     if(VerificaComando(comando, &user))
       write(bf, &user, sizeof(user));
-  } while(strcmp(comando, "exit") != 0);
+  } while(strcmp(comando, "exit") != 0 && data.forceExit != 0);
 
   data.continua = 0;
   pthread_join(thread, NULL);
+
+  pthread_mutex_destroy(&wait);
 
   close(caixa);
   close(bf);

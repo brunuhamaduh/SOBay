@@ -102,14 +102,7 @@ void *trata_login(void *pdata)
         }
         else if(strcmp(user.input[0], "time") == 0)
         {
-          time_t now = time(NULL);
-          struct tm *tm_struct = localtime(&now);
-          int hour = tm_struct->tm_hour;
-          int minute = tm_struct->tm_min;
-          int sec = tm_struct->tm_sec;
-          feedback = (hour * 60 + minute) * 60 + sec;
-          write(fdcli, user.input[0], sizeof(user.input[0]));
-          write(fdcli, &feedback, sizeof(feedback));
+
         }
         else if(strcmp(user.input[0], "sell") == 0)
         {
@@ -133,6 +126,10 @@ void *trata_login(void *pdata)
             fdcli = open(NomeCli, O_WRONLY);
             strcpy(comando, "newitem");
             write(fdcli, comando, sizeof(comando));
+            Item *temp = malloc(sizeof(Item));
+            *temp = Items[nitems - 1];
+            write(fdcli, temp, sizeof(Item));
+            free(temp);
             close(fdcli);
           }
         }
@@ -336,9 +333,10 @@ int main(int argc, char *argv[], char *env[])
 
   pthread_create(&thread, NULL, trata_login, &data);
   
+  printf("Welcome Admin\n");
+
   do
   {
-    printf("Comando: ");
     fflush(stdout);
     fgets(comando, MAX, stdin);
     comando[strcspn(comando, "\n")] = '\0'; //retira a newline do fgets;
@@ -398,8 +396,20 @@ int main(int argc, char *argv[], char *env[])
   data.continua = 0;
   write(bf, &temp, sizeof(User));
   pthread_join(thread, NULL);
-
   pthread_mutex_destroy(&wait);
+
+  char NomeCli[20];
+  int fdcli;
+
+  for(int i = 0; i < nclientes; i++)
+  {
+    sprintf(NomeCli, "CLI%d", cliente[i]);
+    fdcli = open(NomeCli, O_WRONLY);
+    strcpy(comando, "serverlogout");
+    write(fdcli, comando, sizeof(comando));
+    write(fdcli, comando, sizeof(comando));
+    close(fdcli);
+  }
 
   close(bf); //Fecha pipe
   unlink("BF"); //Apaga pipe
