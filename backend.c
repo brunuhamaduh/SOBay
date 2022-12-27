@@ -35,7 +35,7 @@ void *trata_login(void *pdata)
 
   do
   {
-    n = read(data->bf, &user, sizeof(User));
+    n = read(data->bf, &user, sizeof(User)); 
     if(n == sizeof(User))
     {
       sprintf(NomeCli, "CLI%d", user.pid);
@@ -56,8 +56,16 @@ void *trata_login(void *pdata)
         {
           if(data->cliente[i] == user.pid)
           {
+            int k = 0;
             data->cliente[i] = 0;
-            data->nomecliente[i] = 0;
+            for(int j = 0; k < *(data->nclientes); j++)
+            {
+              if(j == i)
+                k++;
+              strcpy(Nomes[j], Nomes[k]);
+              k++;
+            }
+
             *(data->nclientes) = *(data->nclientes) - 1;
             break;
           }
@@ -170,7 +178,7 @@ void *trata_login(void *pdata)
           
           for(int i = 0; i < nitems; i++)
           {
-            if(Items[i].preco_agora <= atoi(user.input[1]))
+            if(Items[i].preco_base <= atoi(user.input[1]))
             {
               ntemp++;
               temp = realloc(temp, sizeof(Item) * ntemp);
