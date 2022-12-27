@@ -12,8 +12,9 @@
 
 typedef struct
 {
-  int *continua;
+  int continua;
   int caixa;
+  int bf;
   pthread_mutex_t *wait;
 } USER_DATA;
 
@@ -108,34 +109,19 @@ void *recebe(void *pdata)
       printf("Comando: ");
     }
     fflush(stdout);
-  } while (*data->continua == 1);
+  } while (data->continua);
   free(item);
-  pthread_exit(NULL);
-}
-
-void *avisos(void *pdata)
-{
-  USER_DATA *data = pdata;
-  char comando[20];
-  do
-  {
-    read(data->caixa, comando, sizeof(comando));
-    if(strcmp(comando, "newitem") == 0)
-    {
-      printf("\nAVISA AQUI\n");
-    }
-  } while (*data->continua == 1);
   pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[])
 {
-  int bf, caixa, feedback, continua = 1;
+  int bf, caixa, feedback;
   char comando[100], NomeCaixa[10];
   User user;
-  USER_DATA data[2];
+  USER_DATA data;
   pthread_mutex_t wait;
-  pthread_t thread[2];
+  pthread_t thread;
 
   if(argc != 3)
     Abort("[ERRO] Sintaxe Errada\nSintaxe Correta: ./frontend <USERNAME> <PASSWORD>\n");
@@ -171,15 +157,13 @@ int main(int argc, char* argv[])
 
   pthread_mutex_init(&wait, NULL);
   
-  data[0].continua = &continua;
-  data[0].caixa = caixa;
-  data[0].wait = &wait;
-  pthread_create(&thread[0], NULL, recebe, &data[0]);
+  data.continua = 1;
+  data.caixa = caixa;
+  data.bf = bf;
+  data.wait = &wait;
 
-  data[1].continua = &continua;
-  data[1].caixa = caixa;
-  data[1].wait = &wait;
-  pthread_create(&thread[1], NULL, avisos, &data[1]);
+  pthread_create(&thread, NULL, recebe, &data);
+
   printf("Comando: ");
   fflush(stdout);
   do
@@ -190,9 +174,10 @@ int main(int argc, char* argv[])
       write(bf, &user, sizeof(user));
   } while(strcmp(comando, "exit") != 0);
 
-  continua = 0;
-  pthread_join(thread[0], NULL);
-  pthread_join(thread[1], NULL);
+  data.continua = 0;
+  strcpy(user.input[0], "end");
+  write(caixa, &user, sizeof(User));
+  pthread_join(thread, NULL);
 
   close(caixa);
   close(bf);

@@ -29,7 +29,6 @@ void *trata_login(void *pdata)
   int feedback;
   int lastID;
   char NomeCli[10];
-  char aviso[20];
   char Nomes[20][20];
   nitems = loadItemsFile("Ficheiros/Items.txt", &Items, &lastID);
   loadUsersFile("Ficheiros/Users.txt");
@@ -44,29 +43,27 @@ void *trata_login(void *pdata)
       {
         *(data->nclientes) = *(data->nclientes) + 1;
         strcpy(Nomes[*(data->nclientes) - 1], user.Username);
-        data->cliente[*(data->nclientes) - 1] = user.pid;
         data->nomecliente[*(data->nclientes) - 1] = Nomes[*(data->nclientes) - 1];
+        data->cliente[*(data->nclientes) - 1] = user.pid;
         feedback = 1;
         fdcli = open(NomeCli, O_WRONLY);
         write(fdcli, &feedback, sizeof(feedback));
         close(fdcli);
-        printf("%d\n", *data->nclientes);
       }
       else if(strcmp(user.input[0], "exit") == 0)
       {
-        for(int i = 0; i < *data->nclientes; i++)
+        for(int i = 0; i < *(data->nclientes); i++)
         {
           if(data->cliente[i] == user.pid)
           {
-            feedback = -1;
-            write(fdcli, &feedback, sizeof(feedback));
             data->cliente[i] = 0;
-            *data->nclientes = *data->nclientes - 1;
+            data->nomecliente[i] = 0;
+            *(data->nclientes) = *(data->nclientes) - 1;
             break;
           }
         }
       }
-      else if((isUserValid(user.Username, user.Password) == 0 || *data->nclientes > 20) && strcmp(user.input[0], "login") == 0)
+      else if((isUserValid(user.Username, user.Password) == 0 || *(data->nclientes) > 20) && strcmp(user.input[0], "login") == 0)
       {
         feedback = 0;
         fdcli = open(NomeCli, O_WRONLY);
@@ -116,14 +113,6 @@ void *trata_login(void *pdata)
           saveItemsFile("Ficheiros/Items.txt", Items, nitems);
           write(fdcli, user.input[0], sizeof(user.input[0]));
           write(fdcli, &Items[nitems - 1].ID, sizeof(Items[nitems - 1].ID));
-          strcpy(aviso, "newitem");
-          for(int i = 0; i < *data->nclientes; i++)
-          {
-            close(fdcli);
-            sprintf(NomeCli, "CLI%d", data->cliente[i]);
-            fdcli = open(NomeCli, O_WRONLY);
-            write(fdcli, aviso, sizeof(aviso));
-          }
         }
         else if(strcmp(user.input[0], "list") == 0)
         {
@@ -321,8 +310,8 @@ int main(int argc, char *argv[], char *env[])
   data.cliente = cliente;
   data.nclientes = &nclientes;
   data.nomecliente = nomecliente;
-  
   data.wait = &wait;
+
   pthread_create(&thread, NULL, trata_login, &data);
   
   do
@@ -379,7 +368,6 @@ int main(int argc, char *argv[], char *env[])
         for(int i = 0; i < nclientes; i++)
         {
           printf("%s\n", nomecliente[i]);
-          fflush(stdout);
         }
       }
     }
