@@ -339,6 +339,8 @@ void *trata_segundos(void *pdata)
   
   do
   {
+    int j, k = 0, fdcli;
+    char comando[20], NomeCli[10];
     sleep(1);
     *data->tempo = *data->tempo + 1;
     for(int i = 0; i < data->nitems; i++)
@@ -346,7 +348,41 @@ void *trata_segundos(void *pdata)
       data->Items[i].duracao = data->Items[i].duracao - 1;
       if(data->Items[i].duracao == 0)
       {
-        
+        if(strcmp(data->Items[i].highestbidder, "-") != 0)
+        {
+          strcpy(comando, "solditem");
+          updateUserBalance(data->Items[i].highestbidder, getUserBalance(data->Items[i].highestbidder) - data->Items[i].preco_base);
+        }
+        else
+          strcpy(comando, "expireditem");
+
+        Item *temp = malloc(sizeof(Item));
+
+        for (j = 0; k < data->nitems; j++)
+        {
+          if (j == i)
+          {
+            k++;
+            *temp = data->Items[j];
+          }
+
+          data->Items[j] = data->Items[k];
+          k++;
+        }
+
+        data->nitems = data->nitems - 1;
+        for (int i = 0; i < *(data->nclientes); i++)
+        {
+          sprintf(NomeCli, "CLI%d", data->cliente[i]);
+          fdcli = open(NomeCli, O_WRONLY);
+          write(fdcli, comando, sizeof(comando));
+          write(fdcli, temp, sizeof(Item));
+          close(fdcli);
+        }
+        free(temp);
+        data->Items = realloc(data->Items, data->nitems * sizeof(Item));
+        saveItemsFile("Ficheiros/Items.txt", data->Items, data->nitems);
+        saveUsersFile("Ficheiros/Users.txt");
       }
     }
   } while (data->continua);
