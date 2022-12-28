@@ -120,12 +120,35 @@ void *recebe(void *pdata)
         printf("Duracao: %d\n", item[0].duracao);
       }
     }
+    else if(strcmp(comando, "solditem") == 0)
+    {
+      int n;
+      item = realloc(item, sizeof(Item));
+      n = read(data->caixa, item, sizeof(Item));
+      if(n == sizeof(Item))
+      {
+        printf("[Item vendido]\n");
+        printf("ID: %d Nome: %s Categoria: %s Preco: %d Buyer: %s\n", item[0].ID, item[0].Nome, item[0].Categoria, item[0].preco_base, item[0].highestbidder);
+      }
+    }
+    else if(strcmp(comando, "expireditem") == 0)
+    {
+      int n;
+      item = realloc(item, sizeof(Item));
+      n = read(data->caixa, item, sizeof(Item));
+      if(n == sizeof(Item))
+      {
+        printf("[Item nao vendido (passou o tempo)]\n");
+        printf("ID: %d Nome: %s Categoria: %s Preco: %d Seller: %s\n", item[0].ID, item[0].Nome, item[0].Categoria, item[0].preco_base, item[0].seller);
+      }
+    }
     else if(strcmp(comando, "serverlogout") == 0)
     {
       printf("SERVIDOR FECHOU!\n");
       printf("Clique ENTER para sair...\n");
       data->forceExit = 0;
     }
+
     fflush(stdout);
   } while (data->continua && data->forceExit);
   
