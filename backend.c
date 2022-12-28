@@ -247,21 +247,26 @@ void *trata_comandos(void *pdata)
                 {
                   strcpy(feedback2, "Success Bought");
                   int j;
-                  Item *temp;
+                  int k = 0;
                   
                   updateUserBalance(data->user.Username, getUserBalance(data->user.Username) - data->Items[i].preco_agora);
-                  data->nitems = data->nitems - 1;
-                  temp = malloc(data->nitems * sizeof(Item));
                   
-                  for(j = 0; j < i; j++)
+                  Item *temp = malloc(sizeof(Item));
+
+                  for(j = 0; k < data->nitems; j++)
                   {
-                    temp[j] = data->Items[j];
+                    if(j == i)
+                    {
+                      k++;
+                      strcpy(data->Items[j].highestbidder, data->user.Username);
+                      *temp = data->Items[j];
+                    }
+                      
+                    data->Items[j] = data->Items[k];
+                    k++;
                   }
 
-                  strcpy(data->Items[j].highestbidder, data->user.Username);
-                  Item *temp2 = malloc(sizeof(Item));
-                  *temp2 = data->Items[j];
-
+                  data->nitems = data->nitems - 1;
                   for(int i = 0; i < *(data->nclientes); i++)
                   {
                     if(data->cliente[i] == data->user.pid)
@@ -270,19 +275,12 @@ void *trata_comandos(void *pdata)
                     fdcli = open(NomeCli, O_WRONLY);
                     strcpy(comando, "solditem");
                     write(fdcli, comando, sizeof(comando));
-                    write(fdcli, temp2, sizeof(Item));
+                    write(fdcli, temp, sizeof(Item));
                     close(fdcli);
                   }
-                  free(temp2);
-
-                  for(int k = j+1; j < data->nitems; j++, k++)
-                  {
-                    temp[j] = data->Items[k];
-                  }
-                  saveItemsFile("Ficheiros/Items.txt", temp, data->nitems);
-                  data->Items = realloc(data->Items, data->nitems * sizeof(Item));
-                  data->Items = temp;
                   free(temp);
+                  data->Items = realloc(data->Items, data->nitems * sizeof(Item));
+                  saveItemsFile("Ficheiros/Items.txt", data->Items, data->nitems);
                   saveUsersFile("Ficheiros/Users.txt");
                 }
                 break;
@@ -327,6 +325,7 @@ void *trata_segundos(void *pdata)
   FILE *fp;
   char buffer[100];
 
+  loadUsersFile("Ficheiros/Users.txt");
   fp = fopen("Ficheiros/tempo.txt", "r");
   
   if(fp == NULL)
@@ -342,60 +341,12 @@ void *trata_segundos(void *pdata)
   {
     sleep(1);
     *data->tempo = *data->tempo + 1;
-    loadUsersFile("Ficheiros/Users.txt");
-
     for(int i = 0; i < data->nitems; i++)
     {
       data->Items[i].duracao = data->Items[i].duracao - 1;
       if(data->Items[i].duracao == 0)
       {
-        bool vendido = false;
-        Item *temp;
-        int j;
-        char comando[20];
-        char NomeCli[10];
-        int fdcli;
-
-        data->nitems = data->nitems - 1;
-        temp = malloc(data->nitems * sizeof(Item));
-
-        if(strcmp(data->Items[i].highestbidder, "-") != 0)
-        {
-          vendido = true;
-          updateUserBalance(data->Items[i].highestbidder, getUserBalance(data->Items[i].highestbidder) - data->Items[i].preco_base);
-        }
-                          
-        for(j = 0; j < i; j++)
-        {
-          temp[j] = data->Items[j];
-        }
-
-        if(vendido)
-          strcpy(comando, "solditem");
-        else
-          strcpy(comando, "expireditem");
-
-        Item *temp2 = malloc(sizeof(Item));
-        *temp2 = data->Items[i];
-        for(int i = 0; i < *(data->nclientes); i++)
-        {
-          sprintf(NomeCli, "CLI%d", data->cliente[i]);
-          fdcli = open(NomeCli, O_WRONLY);
-          write(fdcli, comando, sizeof(comando));
-          write(fdcli, temp2, sizeof(Item));
-          close(fdcli);
-        }
-        free(temp2);
-
-        for(int k = j+1; j < data->nitems; j++, k++)
-        {
-          temp[j] = data->Items[k];
-        }
-        saveItemsFile("Ficheiros/Items.txt", temp, data->nitems);
-        data->Items = realloc(data->Items, data->nitems * sizeof(Item));
-        data->Items = temp;
-        free(temp);
-        saveUsersFile("Ficheiros/Users.txt");
+        
       }
     }
   } while (data->continua);

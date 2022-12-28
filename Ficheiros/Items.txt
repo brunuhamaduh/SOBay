@@ -1,11 +1,3 @@
-10 teste teste 1 2 73 Maria -
-11 teste teste 1 2 72 Maria -
-12 teste teste 1 2 72 Maria -
-13 teste teste 1 2 72 Maria -
-14 omg omg 1 2 372 Maria -
-17 teste teste 1 2 172 Maria -
-21 teste teste 1 2 146 Maria -
-22 teste teste 1 2 169 Maria -
-24 teste teste 1 2 184 Cristina -
-25 teste teste 1 2 187 Cristina -
-26 teste teste 1 2 190 Cristina -
+11 teste teste 1 2 20 Cristina -
+12 teste teste 1 2 30 Cristina -
+13 teste teste 1 2 40 Cristina -
