@@ -16,8 +16,7 @@ typedef struct
   char input[6][20];
 } User;
 
-int VerificaArgumentosAdmin(char *token);
-int VerificaComandoAdmin(char *string);
+int VerificaComandoAdmin(char *string, User *user);
 int saveItemsFile(char *filename, Item *Items, int Num_Items);
 int loadItemsFile(char *pathname, Item **Items, int *lastID);
 void getFileNames(char *env[], char *filename1, char *filename2);

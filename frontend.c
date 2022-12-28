@@ -148,7 +148,13 @@ void *recebe(void *pdata)
       printf("Clique ENTER para sair...\n");
       data->forceExit = 0;
     }
-
+    else if(strcmp(comando, "serverkick") == 0)
+    {
+      printf("BANIDO TEMPORARIAMENTE!\n");
+      printf("Clique ENTER para sair...\n");
+      data->forceExit = 0;
+    }
+    
     fflush(stdout);
   } while (data->continua && data->forceExit);
   

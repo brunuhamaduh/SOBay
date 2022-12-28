@@ -4,39 +4,46 @@
 #include <stdbool.h>
 #include "backlib.h"
 
-int VerificaArgumentosAdmin(char *token)
+int VerificaComandoAdmin(char *string, User *user)
 {
   int quantidade = 0;
+  char *token;
+  char **final;
+  bool valid = false;
+  token = strtok(string, " ");
+
+  final = malloc(quantidade * sizeof(char*));
+
   while(token != NULL)
   {
     quantidade++;
+    final = realloc(final, quantidade * sizeof(char*));
+    final[quantidade-1] = token;
     token = strtok(NULL, " ");
   }
-  return quantidade;
-}
 
-int VerificaComandoAdmin(char *string)
-{
-  int i, argumentos = 0;
-  char *FirstWord;
-
-  FirstWord = strtok(string, " ");
-  argumentos = VerificaArgumentosAdmin(FirstWord);
-
-  if(strcmp(FirstWord, "users") == 0 || strcmp(FirstWord, "prom") == 0 || strcmp(FirstWord, "reprom") == 0 || strcmp(FirstWord, "items") == 0)
+  if(strcmp(final[0], "users") == 0 || strcmp(final[0], "prom") == 0 || strcmp(final[0], "reprom") == 0 || strcmp(final[0], "items") == 0 || strcmp(final[0], "list") == 0 || strcmp(final[0], "close") == 0)
   {
-    if(argumentos == 1)
-      return 2;
-    return 1;
+    if(quantidade == 1)
+    {
+      strcpy(user->input[0], final[0]);
+      valid = true;
+    }
   }
 
-  else if(strcmp(FirstWord, "list") == 0 || strcmp(FirstWord, "kick") == 0 || strcmp(FirstWord, "cancel") == 0)
+  else if(strcmp(final[0], "kick") == 0 || strcmp(final[0], "cancel") == 0)
   {
-    if(argumentos == 2)
-      return 2;
-    return 1;
+    if(quantidade == 2)
+    {
+      strcpy(user->input[0], final[0]);
+      strcpy(user->input[1], final[1]);
+      valid = true;
+    }
   }
-  return 0;
+
+  free(token);
+  free(final);
+  return valid;
 }
 
 int saveItemsFile(char * filename, Item *Items, int Num_Items)

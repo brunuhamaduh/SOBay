@@ -405,8 +405,10 @@ int main(int argc, char *argv[], char *env[])
   int cliente[20] = {0};
   int nclientes = 0;
   char *nomecliente[20] = {'\0'};
-  int Res, bf;
+  char NomeCli[10];
+  int bf;
   int tempo;
+  User user;
   
   USER_DATA data;
   pthread_mutex_t wait;
@@ -439,12 +441,9 @@ int main(int argc, char *argv[], char *env[])
     fgets(comando, MAX, stdin);
     comando[strcspn(comando, "\n")] = '\0'; //retira a newline do fgets;
     
-    Res = VerificaComandoAdmin(comando);
-    if(Res == 0 && strcmp(comando, "close") != 0)
+    if(!VerificaComandoAdmin(comando, &user))
       printf("Comando inválido\n");
-    else if(Res == 1)
-      printf("Número de argumentos incorrecto\n");
-    else if(Res == 2)
+    else
     {
       if(strcmp(comando, "reprom") == 0)
       {
@@ -482,10 +481,55 @@ int main(int argc, char *argv[], char *env[])
       }
       else if(strcmp(comando, "users") == 0)
       {
-        printf("Clientes Online\n");
+        if(nclientes != 0)
+          printf("Clientes Online\n");
+        else
+          printf("Nao existem clientes online\n");
         for(int i = 0; i < nclientes; i++)
         {
           printf("%s\n", nomecliente[i]);
+        }
+      }
+      else if(strcmp(comando, "list") == 0)
+      {
+        if(data.nitems != 0)
+          printf("|ID|NOME PRODUTO|CATEGORIA|PRECOB|PRECOA|SEC|SELLER|HBidder|\n");
+        else
+          printf("Nao existem produtos a serem vendidos\n");
+        for(int i = 0; i < data.nitems; i++)
+        {
+          printf("|%-2.2d|%-12.12s|%-9.9s|%-6.6d|%-6.6d|%-3.3d|%-6.6s|%-7.7s|\n", data.Items[i].ID, data.Items[i].Nome, data.Items[i].Categoria, data.Items[i].preco_base, data.Items[i].preco_agora, data.Items[i].duracao, data.Items[i].seller, data.Items[i].highestbidder);
+        }
+      }
+      else if(strcmp(comando, "kick") == 0)
+      {
+        int i = 0;
+        for(i = 0; i < nclientes; i++)
+        {
+          if(strcmp(user.input[1], nomecliente[i]) == 0)
+            break;
+        }
+        if(i == nclientes)
+          printf("Nao existe clientes com este username\n");
+        else
+        {
+          printf("Utilizador kickado\n");
+          sprintf(NomeCli, "CLI%d", cliente[i]);
+          int fdcli = open(NomeCli, O_WRONLY);
+          strcpy(comando, "serverkick");
+          write(fdcli, comando, sizeof(comando));
+          close(fdcli);
+          cliente[i] = 0;
+          int k = 0;
+          for(int j = 0; k < nclientes; j++)
+          {
+            if(j == i)
+              k++;
+            nomecliente[j] = nomecliente[k];
+            k++;
+          }
+
+          nclientes = nclientes - 1;
         }
       }
     }
@@ -497,7 +541,6 @@ int main(int argc, char *argv[], char *env[])
   pthread_join(thread[1], NULL);
   pthread_mutex_destroy(&wait);
 
-  char NomeCli[20];
   int fdcli;
 
   for(int i = 0; i < nclientes; i++)
