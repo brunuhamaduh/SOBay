@@ -530,8 +530,7 @@ int main(int argc, char *argv[], char *env[])
         if(nproms != 10)
           pthread_create(&promotor[nproms++], NULL, trata_promotor, &data);
         else
-          printf("MAXIMO\n");
-        printf("nproms = %d\n", nproms);
+          printf("Limite de promotores atingido (10)\n");
       }
       else if(strcmp(comando, "prom") == 0)
       {
@@ -552,6 +551,8 @@ int main(int argc, char *argv[], char *env[])
             kill(prom[i], SIGUSR1);
             pthread_join(promotor[i], NULL);      
           }
+          for(int i = 0; i < 10; i++)
+            printf("teste = %d\n", promotor[i]);
         }
       }
       else if(strcmp(comando, "users") == 0)
