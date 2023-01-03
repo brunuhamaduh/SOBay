@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <signal.h>
 #include <pthread.h>
+#include <fcntl.h> 
 #include "Header/users_lib.h"
 #include "Header/backlib.h"
 #define MAX 100
@@ -14,17 +15,17 @@ typedef struct
   Item *Items;
   User user;
   int nitems;
-  int nproms;
   int continua;
   int bf;
-  int *nclientes;
-  int *cliente;
-  char **nomecliente;
-  int *openedProms;
   char userfilename[50];
   char promfilename[50];
   char itemfilename[50];
-  char nameopenprom[50];
+  char **nomecliente;
+  int *cliente;
+  int *nclientes;
+  char **nomeprom; //ficheiro
+  int *prom; //pid
+  int *nprom; //quantidade
   pthread_mutex_t *wait;
 } USER_DATA;
 
@@ -408,10 +409,9 @@ void *trata_segundos(void *pdata)
 void *trata_promotor(void *pdata)
 {
   USER_DATA *data = pdata;
-  int openedProms[10];
+  char nameproms[10][50];
   int PID_Promotor, prom[2];
   int nbytes;
-  int teste;
   pipe(prom);
   PID_Promotor = fork();
 
@@ -426,9 +426,10 @@ void *trata_promotor(void *pdata)
 
   close(prom[1]); //close write
 
-  data->nproms = data->nproms + 1;
-  openedProms[data->nproms - 1] = PID_Promotor;
-  data->openedProms[data->nproms - 1] = openedProms[data->nproms - 1];
+  *(data->nprom) = *(data->nprom) + 1;
+  strcpy(nameproms[*(data->nprom) - 1], "promotor_oficial");
+  data->nomeprom[*(data->nprom) - 1] = nameproms[*(data->nprom) - 1];
+  data->prom[*(data->nprom) - 1] = PID_Promotor;
   
   printf("A espera de input...\n");   
   while(kill(PID_Promotor, 0) == 0 && data->continua)
@@ -441,10 +442,15 @@ void *trata_promotor(void *pdata)
       buffer[nbytes] = '\0';
       printf("%s\n", buffer);
     }
+    else
+      break;
   }
   close(prom[0]);
-  waitpid(-1, 0, 0);
-  printf("PROMOTOR FECHADO\n");
+  wait(NULL);
+  
+  //FAZER ESTA PARTE *data->nprom = *data->nprom - 1;
+  //NESTE MOMENTO SO ESTA A ADICIONAR NO ARRAY E NAO A TIRAR
+
   pthread_exit(NULL);
 }
 
@@ -452,16 +458,16 @@ int main(int argc, char *argv[], char *env[])
 {
   char comando[MAX];
   int cliente[20] = {0};
+  int prom[20] = {0};
   int nclientes = 0;
   char *nomecliente[20] = {'\0'};
+  char *nomeProm[20] = {'\0'};
   char filename[3][50] = {'\0'};
   char NomeCli[10];
-  int openedProms[10];
-  int nproms;
+  int nproms = 0;
   int bf;
   int tempo;
   User user;
-  int activethreads = 0;
   
   USER_DATA data;
   pthread_mutex_t wait;
@@ -479,10 +485,14 @@ int main(int argc, char *argv[], char *env[])
   data.continua = 1;
   data.bf = bf;
   data.tempo = &tempo;
+  
   data.cliente = cliente;
   data.nclientes = &nclientes;
   data.nomecliente = nomecliente;
-  data.openedProms = openedProms;
+  
+  data.prom = prom;
+  data.nprom = &nproms;
+  data.nomeprom = nomeProm;
 
   strcpy(data.userfilename, filename[0]);
   strcpy(data.itemfilename, filename[1]);
@@ -508,9 +518,18 @@ int main(int argc, char *argv[], char *env[])
       {
         pthread_create(&promotor[0], NULL, trata_promotor, &data);
       }
+      else if(strcmp(comando, "prom") == 0)
+      {
+        if(nproms != 0)
+          printf("Promotores ativos: \n");
+        else
+          printf("Nao existem promotores ativos\n");
+        for(int i = 0; i < nproms; i++)
+          printf("%s\n", nomeProm[i]);
+      }
       else if(strcmp(comando, "cancel") == 0)
       {
-        if(kill(data.openedProms[0], SIGUSR1) == 0)
+        if(kill(prom[0], SIGUSR1) == 0)
           printf("Promotor fechado com sucesso\n");
         else
           printf("Esse promotor nao esta aberto\n");
@@ -574,9 +593,16 @@ int main(int argc, char *argv[], char *env[])
 
   data.continua = 0;
   write(bf, &temp, sizeof(User));
+
   pthread_join(thread[0], NULL);
   pthread_join(thread[1], NULL);
-  pthread_join(promotor[0], NULL);
+
+  for(int i = 0; i < nproms; i++)
+  {
+    kill(prom[i], SIGUSR1);
+    pthread_join(promotor[i], NULL);
+  }
+  
   pthread_mutex_destroy(&wait);
 
   int fdcli;
