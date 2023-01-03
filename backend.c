@@ -14,14 +14,17 @@ typedef struct
   Item *Items;
   User user;
   int nitems;
+  int nproms;
   int continua;
   int bf;
   int *nclientes;
   int *cliente;
   char **nomecliente;
+  int *openedProms;
   char userfilename[50];
   char promfilename[50];
   char itemfilename[50];
+  char nameopenprom[50];
   pthread_mutex_t *wait;
 } USER_DATA;
 
@@ -36,8 +39,8 @@ void *trata_comandos(void *pdata)
   char NomeCli[10];
   char comando[20];
   char Nomes[20][20];
-  data->nitems = loadItemsFile("Ficheiros/Items.txt", &data->Items, &lastID);
-  loadUsersFile("Ficheiros/Users.txt");
+  data->nitems = loadItemsFile(data->itemfilename, &data->Items, &lastID);
+  loadUsersFile(data->userfilename);
 
   do
   {
@@ -95,7 +98,7 @@ void *trata_comandos(void *pdata)
         {
           feedback = getUserBalance(data->user.Username) + atoi(data->user.input[1]);
           updateUserBalance(data->user.Username, feedback);
-          saveUsersFile("Ficheiros/Users.txt"); 
+          saveUsersFile(data->userfilename); 
           write(fdcli, data->user.input[0], sizeof(data->user.input[0]));
           write(fdcli, &feedback, sizeof(feedback));
         }
@@ -123,7 +126,7 @@ void *trata_comandos(void *pdata)
           data->Items[data->nitems - 1].duracao = atoi(data->user.input[5]);
           strcpy(data->Items[data->nitems - 1].seller, data->user.Username);
           strcpy(data->Items[data->nitems - 1].highestbidder, "-");
-          saveItemsFile("Ficheiros/Items.txt", data->Items, data->nitems);
+          saveItemsFile(data->userfilename, data->Items, data->nitems);
           write(fdcli, data->user.input[0], sizeof(data->user.input[0]));
           write(fdcli, &data->Items[data->nitems - 1].ID, sizeof(data->Items[data->nitems - 1].ID));
           close(fdcli);
@@ -283,8 +286,8 @@ void *trata_comandos(void *pdata)
                   }
                   free(temp);
                   data->Items = realloc(data->Items, data->nitems * sizeof(Item));
-                  saveItemsFile("Ficheiros/Items.txt", data->Items, data->nitems);
-                  saveUsersFile("Ficheiros/Users.txt");
+                  saveItemsFile(data->itemfilename, data->Items, data->nitems);
+                  saveUsersFile(data->userfilename);
                 }
                 break;
               }
@@ -297,7 +300,7 @@ void *trata_comandos(void *pdata)
                   strcpy(feedback2, "Success");
                   strcpy(data->Items[i].highestbidder, data->user.Username);
                   data->Items[i].preco_base = atoi(data->user.input[2]);
-                  saveItemsFile("Ficheiros/Items.txt", data->Items, data->nitems); 
+                  saveItemsFile(data->itemfilename, data->Items, data->nitems); 
                 }
               }
               else if(data->Items[i].ID == atoi(data->user.input[1]) && atoi(data->user.input[2]) <= data->Items[i].preco_base)
@@ -328,7 +331,7 @@ void *trata_segundos(void *pdata)
   FILE *fp;
   char buffer[100];
 
-  loadUsersFile("Ficheiros/Users.txt");
+  loadUsersFile(data->userfilename);
   fp = fopen("Ficheiros/tempo.txt", "r");
   
   if(fp == NULL)
@@ -384,8 +387,8 @@ void *trata_segundos(void *pdata)
         }
         free(temp);
         data->Items = realloc(data->Items, data->nitems * sizeof(Item));
-        saveItemsFile("Ficheiros/Items.txt", data->Items, data->nitems);
-        saveUsersFile("Ficheiros/Users.txt");
+        saveItemsFile(data->itemfilename, data->Items, data->nitems);
+        saveUsersFile(data->userfilename);
       }
     }
   } while (data->continua);
@@ -402,6 +405,49 @@ void *trata_segundos(void *pdata)
   pthread_exit(NULL);
 }
 
+void *trata_promotor(void *pdata)
+{
+  USER_DATA *data = pdata;
+  int openedProms[10];
+  int PID_Promotor, prom[2];
+  int nbytes;
+  int teste;
+  pipe(prom);
+  PID_Promotor = fork();
+
+  if(PID_Promotor == 0)
+  {
+    close(prom[0]); //close read
+    close(1);
+    dup(prom[1]);
+    close(prom[1]);
+    execl("Promotor/promotor_oficial", "Promotor/promotor_oficial", NULL);
+  }
+
+  close(prom[1]); //close write
+
+  data->nproms = data->nproms + 1;
+  openedProms[data->nproms - 1] = PID_Promotor;
+  data->openedProms[data->nproms - 1] = openedProms[data->nproms - 1];
+  
+  printf("A espera de input...\n");   
+  while(kill(PID_Promotor, 0) == 0 && data->continua)
+  {
+    char buffer[100];
+    nbytes = read(prom[0], buffer, sizeof(buffer));
+    if(nbytes != 0)
+    {
+      printf("A espera de input...\n");
+      buffer[nbytes] = '\0';
+      printf("%s\n", buffer);
+    }
+  }
+  close(prom[0]);
+  waitpid(-1, 0, 0);
+  printf("PROMOTOR FECHADO\n");
+  pthread_exit(NULL);
+}
+
 int main(int argc, char *argv[], char *env[])
 {
   char comando[MAX];
@@ -410,13 +456,17 @@ int main(int argc, char *argv[], char *env[])
   char *nomecliente[20] = {'\0'};
   char filename[3][50] = {'\0'};
   char NomeCli[10];
+  int openedProms[10];
+  int nproms;
   int bf;
   int tempo;
   User user;
+  int activethreads = 0;
   
   USER_DATA data;
   pthread_mutex_t wait;
   pthread_t thread[2];
+  pthread_t promotor[10];
   User temp;
   
   getFileNames(env, filename);
@@ -432,6 +482,8 @@ int main(int argc, char *argv[], char *env[])
   data.cliente = cliente;
   data.nclientes = &nclientes;
   data.nomecliente = nomecliente;
+  data.openedProms = openedProms;
+
   strcpy(data.userfilename, filename[0]);
   strcpy(data.itemfilename, filename[1]);
   strcpy(data.promfilename, filename[2]);
@@ -441,7 +493,6 @@ int main(int argc, char *argv[], char *env[])
   pthread_create(&thread[1], NULL, trata_segundos, &data);
 
   printf("Welcome Admin\n");
-  printf("%s %s %s\n", data.userfilename, data.itemfilename, data.promfilename);
 
   do
   {
@@ -455,37 +506,15 @@ int main(int argc, char *argv[], char *env[])
     {
       if(strcmp(comando, "reprom") == 0)
       {
-        if(fork() == 0)
-        {
-          int PID_Promotor, prom[2];
-          union sigval stop;
-
-          pipe(prom);
-          PID_Promotor = fork();
-
-          if(PID_Promotor == 0)
-          {
-            close(prom[0]); //close read
-            close(1);
-            dup(prom[1]);
-            close(prom[1]);
-            execl("Promotor/promotor_oficial", "Promotor/promotor_oficial", NULL);
-          }
-          close(prom[1]); //close write
-          
-          while(kill(PID_Promotor, 0) == 0) //enquanto estiver a correr (META 1)
-          {
-            char buffer[100];
-            int nbytes = read(prom[0], buffer, sizeof(buffer));
-            buffer[nbytes] = '\0';
-            if(nbytes > 1)
-              printf("Promoção na categoria ");
-            printf("%s", buffer);
-            sigqueue(PID_Promotor, SIGUSR1, stop); //APENAS META 1
-          }
-          close(prom[0]);
-          exit(0);
-        }
+        pthread_create(&promotor[0], NULL, trata_promotor, &data);
+      }
+      else if(strcmp(comando, "cancel") == 0)
+      {
+        if(kill(data.openedProms[0], SIGUSR1) == 0)
+          printf("Promotor fechado com sucesso\n");
+        else
+          printf("Esse promotor nao esta aberto\n");
+        pthread_join(promotor[0], NULL);
       }
       else if(strcmp(comando, "users") == 0)
       {
@@ -547,6 +576,7 @@ int main(int argc, char *argv[], char *env[])
   write(bf, &temp, sizeof(User));
   pthread_join(thread[0], NULL);
   pthread_join(thread[1], NULL);
+  pthread_join(promotor[0], NULL);
   pthread_mutex_destroy(&wait);
 
   int fdcli;
