@@ -85,23 +85,39 @@ int loadItemsFile(char *pathname, Item **Items, int *lastID)
   return i;
 }
 
-void getFileNames(char *env[], char *filename1, char *filename2)
+void getFileNames(char *env[], char filename[][50])
 {
-  strcpy(filename1, "Ficheiros/");
-  strcpy(filename2, "Ficheiros/");
+  char temp[20];
+
+  strcpy(temp, "Ficheiros/");
 
   if(getenv("FUSERS") != NULL)
-    strcat(filename1, getenv("FUSERS"));
+    strcat(temp, getenv("FUSERS"));
   else
-    strcat(filename1, "Users");
+    strcat(temp, "Users");
+  
+  strcat(temp,".txt");
+  strcpy(filename[0], temp);
+
+  strcpy(temp, "Ficheiros/");
 
   if(getenv("FITEMS") != NULL)
-    strcat(filename2, getenv("FITEMS"));
+    strcat(temp, getenv("FITEMS"));
   else
-    strcat(filename2, "Items");
+    strcat(temp, "Items");
 
-  strcat(filename1,".txt");
-  strcat(filename2,".txt");
+  strcat(temp,".txt");
+  strcpy(filename[1], temp);
+
+  strcpy(temp, "Ficheiros/");
+
+  if(getenv("FPROMOTERS") != NULL)
+    strcat(temp, getenv("FPROMOTERS"));
+  else
+    strcat(temp, "Promoters");
+
+  strcat(temp,".txt");
+  strcpy(filename[2], temp);
 }
 
 void Abort(char *msg)

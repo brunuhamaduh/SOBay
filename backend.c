@@ -19,6 +19,9 @@ typedef struct
   int *nclientes;
   int *cliente;
   char **nomecliente;
+  char userfilename[50];
+  char promfilename[50];
+  char itemfilename[50];
   pthread_mutex_t *wait;
 } USER_DATA;
 
@@ -405,6 +408,7 @@ int main(int argc, char *argv[], char *env[])
   int cliente[20] = {0};
   int nclientes = 0;
   char *nomecliente[20] = {'\0'};
+  char filename[3][50] = {'\0'};
   char NomeCli[10];
   int bf;
   int tempo;
@@ -415,7 +419,7 @@ int main(int argc, char *argv[], char *env[])
   pthread_t thread[2];
   User temp;
   
-  //getFileNames(env, Userfilename, Itemfilename);
+  getFileNames(env, filename);
 
   mkfifo("BF", 0666);
   bf = open("BF", O_RDWR);
@@ -428,12 +432,16 @@ int main(int argc, char *argv[], char *env[])
   data.cliente = cliente;
   data.nclientes = &nclientes;
   data.nomecliente = nomecliente;
+  strcpy(data.userfilename, filename[0]);
+  strcpy(data.itemfilename, filename[1]);
+  strcpy(data.promfilename, filename[2]);
   data.wait = &wait;
 
   pthread_create(&thread[0], NULL, trata_comandos, &data);
   pthread_create(&thread[1], NULL, trata_segundos, &data);
 
   printf("Welcome Admin\n");
+  printf("%s %s %s\n", data.userfilename, data.itemfilename, data.promfilename);
 
   do
   {
