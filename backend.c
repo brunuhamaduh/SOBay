@@ -426,7 +426,6 @@ void *trata_promotor(void *pdata)
 
   close(prom[1]); //close write
 
-  *(data->nprom) = *(data->nprom) + 1;
   strcpy(nameproms[*(data->nprom) - 1], "promotor_oficial");
   data->nomeprom[*(data->nprom) - 1] = nameproms[*(data->nprom) - 1];
   data->prom[*(data->nprom) - 1] = PID_Promotor;
@@ -445,12 +444,24 @@ void *trata_promotor(void *pdata)
     else
       break;
   }
+
   close(prom[0]);
   wait(NULL);
-  
-  //FAZER ESTA PARTE *data->nprom = *data->nprom - 1;
-  //NESTE MOMENTO SO ESTA A ADICIONAR NO ARRAY E NAO A TIRAR
+  for(int i = 0; i < *(data->nprom); i++)
+  {
+    int k = 0;
+    data->prom[i] = 0;
+    for(int j = 0; k < *(data->nprom); j++)
+    {
+        if(j == i)
+          k++;
+        strcpy(nameproms[j], nameproms[k]);
+        k++;
+    }
 
+    *data->nprom = *data->nprom - 1;
+    break;
+    }
   pthread_exit(NULL);
 }
 
@@ -516,7 +527,11 @@ int main(int argc, char *argv[], char *env[])
     {
       if(strcmp(comando, "reprom") == 0)
       {
-        pthread_create(&promotor[0], NULL, trata_promotor, &data);
+        if(nproms != 10)
+          pthread_create(&promotor[nproms++], NULL, trata_promotor, &data);
+        else
+          printf("MAXIMO\n");
+        printf("nproms = %d\n", nproms);
       }
       else if(strcmp(comando, "prom") == 0)
       {
@@ -529,11 +544,15 @@ int main(int argc, char *argv[], char *env[])
       }
       else if(strcmp(comando, "cancel") == 0)
       {
-        if(kill(prom[0], SIGUSR1) == 0)
-          printf("Promotor fechado com sucesso\n");
-        else
-          printf("Esse promotor nao esta aberto\n");
-        pthread_join(promotor[0], NULL);
+        int nproms_temp = nproms;
+        for(int i = 0; i < nproms_temp; i++)
+        {
+          if(strcmp(user.input[1], nomeProm[i]) == 0)
+          {
+            kill(prom[i], SIGUSR1);
+            pthread_join(promotor[i], NULL);      
+          }
+        }
       }
       else if(strcmp(comando, "users") == 0)
       {
