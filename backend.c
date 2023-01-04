@@ -461,13 +461,14 @@ void *trata_promotor(void *pdata)
 
     *data->nprom = *data->nprom - 1;
     break;
-    }
+  }
   pthread_exit(NULL);
 }
 
 int main(int argc, char *argv[], char *env[])
 {
   char comando[MAX];
+  char buffer[MAX];
   int cliente[20] = {0};
   int prom[20] = {0};
   int nclientes = 0;
@@ -475,6 +476,7 @@ int main(int argc, char *argv[], char *env[])
   char *nomeProm[20] = {'\0'};
   char filename[3][50] = {'\0'};
   char NomeCli[10];
+  bool available[10];
   int nproms = 0;
   int bf;
   int tempo;
@@ -485,6 +487,11 @@ int main(int argc, char *argv[], char *env[])
   pthread_t thread[2];
   pthread_t promotor[10];
   User temp;
+
+  for(int i = 0; i < 10; i++)
+  {
+    available[i] = 1;
+  }
   
   getFileNames(env, filename);
 
@@ -527,10 +534,30 @@ int main(int argc, char *argv[], char *env[])
     {
       if(strcmp(comando, "reprom") == 0)
       {
-        if(nproms != 10)
-          pthread_create(&promotor[nproms++], NULL, trata_promotor, &data);
-        else
-          printf("Limite de promotores atingido (10)\n");
+        FILE *fp = fopen(filename[2], "r");
+        int quant = 0;
+        if(fp == NULL)
+          return -1;
+        
+        while(fgets(buffer, sizeof(buffer), fp) != NULL)
+        {
+          sscanf(buffer, "%s", nomeProm[quant]);
+          if(quant < 10)
+          {
+            for(int i = 0; i < 10; i++)
+            {
+              if(available[i] == true)
+              {
+                pthread_create(&promotor[quant], NULL, trata_promotor, &data);
+                break;
+              }
+            }
+          }
+            
+          //available[quant] = false;
+          quant++;
+        }
+        fclose(fp);
       }
       else if(strcmp(comando, "prom") == 0)
       {
@@ -540,6 +567,11 @@ int main(int argc, char *argv[], char *env[])
           printf("Nao existem promotores ativos\n");
         for(int i = 0; i < nproms; i++)
           printf("%s\n", nomeProm[i]);
+        for(int i = 0; i < 10; i++)
+        {
+          printf("%d ", available[i]);
+        }
+        printf("\n");
       }
       else if(strcmp(comando, "cancel") == 0)
       {
@@ -551,8 +583,6 @@ int main(int argc, char *argv[], char *env[])
             kill(prom[i], SIGUSR1);
             pthread_join(promotor[i], NULL);      
           }
-          for(int i = 0; i < 10; i++)
-            printf("teste = %d\n", promotor[i]);
         }
       }
       else if(strcmp(comando, "users") == 0)
@@ -617,10 +647,13 @@ int main(int argc, char *argv[], char *env[])
   pthread_join(thread[0], NULL);
   pthread_join(thread[1], NULL);
 
-  for(int i = 0; i < nproms; i++)
+  for(int i = 0; i < 10; i++)
   {
-    kill(prom[i], SIGUSR1);
-    pthread_join(promotor[i], NULL);
+    if(prom[i] != 0)
+    {
+      kill(prom[i], SIGUSR1);
+      pthread_join(promotor[i], NULL);
+    }
   }
   
   pthread_mutex_destroy(&wait);
