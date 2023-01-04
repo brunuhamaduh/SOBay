@@ -416,6 +416,9 @@ void *trata_promotor(void *pdata)
   int nbytes;
   pipe(prom);
   PID_Promotor = fork();
+  char ficheiro[100];
+  strcpy(ficheiro, "Promotor/");
+  strcat(ficheiro, data->nomeprom);
 
   if(PID_Promotor == 0)
   {
@@ -423,7 +426,7 @@ void *trata_promotor(void *pdata)
     close(1);
     dup(prom[1]);
     close(prom[1]);
-    execl("Promotor/promotor_oficial", "Promotor/promotor_oficial", NULL);
+    execl(ficheiro, ficheiro, NULL);
   }
 
   close(prom[1]); //close write
@@ -553,6 +556,7 @@ int main(int argc, char *argv[], char *env[])
                 {
                   index = i;
                   nomeProm[quant] = temp;
+                  nproms++;
                   pthread_create(&promotor[quant], NULL, trata_promotor, &data);
                   break;
                 }
