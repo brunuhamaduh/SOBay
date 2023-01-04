@@ -536,28 +536,29 @@ int main(int argc, char *argv[], char *env[])
       {
         FILE *fp = fopen(filename[2], "r");
         int quant = 0;
-        if(fp == NULL)
-          return -1;
-        
-        while(fgets(buffer, sizeof(buffer), fp) != NULL)
+        if(fp != NULL)
         {
-          sscanf(buffer, "%s", nomeProm[quant]);
-          if(quant < 10)
+          while(fgets(buffer, sizeof(buffer), fp) != NULL)
           {
-            for(int i = 0; i < 10; i++)
+            sscanf(buffer, "%s", nomeProm[quant]);
+            if(quant < 10)
             {
-              if(available[i] == true)
+              for(int i = 0; i < 10; i++)
               {
-                pthread_create(&promotor[quant], NULL, trata_promotor, &data);
-                break;
+                if(available[i] == true)
+                {
+                  pthread_create(&promotor[quant], NULL, trata_promotor, &data);
+                  break;
+                }
               }
-            }
+            } 
+            available[quant] = false;
+            quant++;
           }
-            
-          //available[quant] = false;
-          quant++;
+          fclose(fp);
         }
-        fclose(fp);
+        else
+          printf("Nao foi possivel abrir ficheiro dos promotores\n");
       }
       else if(strcmp(comando, "prom") == 0)
       {
