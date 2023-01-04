@@ -17,9 +17,11 @@ typedef struct
   int nitems;
   int continua;
   int bf;
+  int *index;
   char userfilename[50];
   char promfilename[50];
   char itemfilename[50];
+  bool *available;
   char **nomecliente;
   int *cliente;
   int *nclientes;
@@ -426,9 +428,9 @@ void *trata_promotor(void *pdata)
 
   close(prom[1]); //close write
 
-  strcpy(nameproms[*(data->nprom) - 1], "promotor_oficial");
-  data->nomeprom[*(data->nprom) - 1] = nameproms[*(data->nprom) - 1];
-  data->prom[*(data->nprom) - 1] = PID_Promotor;
+  strcpy(nameproms[*data->index], *data->nomeprom);
+  data->nomeprom[*data->index] = nameproms[*data->index];
+  data->prom[*data->index] = PID_Promotor;
   
   printf("A espera de input...\n");   
   while(kill(PID_Promotor, 0) == 0 && data->continua)
@@ -467,6 +469,7 @@ void *trata_promotor(void *pdata)
 
 int main(int argc, char *argv[], char *env[])
 {
+  int index = 0;
   char comando[MAX];
   char buffer[MAX];
   int cliente[20] = {0};
@@ -489,9 +492,7 @@ int main(int argc, char *argv[], char *env[])
   User temp;
 
   for(int i = 0; i < 10; i++)
-  {
     available[i] = 1;
-  }
   
   getFileNames(env, filename);
 
@@ -511,6 +512,8 @@ int main(int argc, char *argv[], char *env[])
   data.prom = prom;
   data.nprom = &nproms;
   data.nomeprom = nomeProm;
+  data.index = &index;
+  data.available = available;
 
   strcpy(data.userfilename, filename[0]);
   strcpy(data.itemfilename, filename[1]);
@@ -540,13 +543,16 @@ int main(int argc, char *argv[], char *env[])
         {
           while(fgets(buffer, sizeof(buffer), fp) != NULL)
           {
-            sscanf(buffer, "%s", nomeProm[quant]);
+            char temp[50];
+            sscanf(buffer, "%s", temp);
             if(quant < 10)
             {
               for(int i = 0; i < 10; i++)
               {
                 if(available[i] == true)
                 {
+                  index = i;
+                  nomeProm[quant] = temp;
                   pthread_create(&promotor[quant], NULL, trata_promotor, &data);
                   break;
                 }
@@ -554,6 +560,7 @@ int main(int argc, char *argv[], char *env[])
             } 
             available[quant] = false;
             quant++;
+            sleep(1);
           }
           fclose(fp);
         }
