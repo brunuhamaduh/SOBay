@@ -417,7 +417,7 @@ void *trata_promotor(void *pdata)
   PID_Promotor = fork();
   char ficheiro[100];
   strcpy(ficheiro, "Promotor/");
-  strcat(ficheiro, *data->nomeprom);
+  strcat(ficheiro, data->nomeprom[*data->index]);
 
   if(PID_Promotor == 0)
   {
@@ -540,8 +540,6 @@ int main(int argc, char *argv[], char *env[])
                   nomeProm[quant] = nomeprom2[quant];
                   nproms++;
                   pthread_create(&promotor[quant], NULL, trata_promotor, &data);
-                  printf("NOME DO FICHEIRO = %s\n", nomeProm[quant]);
-                  printf("INDEX = %d\n", index);
                   break;
                 }
               }
@@ -562,17 +560,14 @@ int main(int argc, char *argv[], char *env[])
         else
           printf("Nao existem promotores ativos\n");
         for(int i = 0; i < nproms; i++)
-          printf("%s\n", nomeProm[i]);
-        for(int i = 0; i < 10; i++)
         {
-          printf("%d ", available[i]);
+          if(strcmp(nomeprom2[i], "REMOVED") != 0)
+            printf("%s ", nomeprom2[i]);
         }
         printf("\n");
       }
       else if(strcmp(comando, "cancel") == 0)
       {
-        int indexes[10];
-        int toRemove = 0;
         for(int i = 0; i < nproms; i++)
         {
           if(strcmp(user.input[1], nomeProm[i]) == 0)
@@ -580,13 +575,10 @@ int main(int argc, char *argv[], char *env[])
             kill(prom[i], SIGUSR1);
             pthread_join(promotor[i], NULL);    
             available[i] = true;
+            strcpy(nomeprom2[i], "REMOVED");
             prom[i] = 0;
-            indexes[toRemove] = i;
-            toRemove++;
           }
         }
-        
-        nproms = nproms - toRemove;
       }
       else if(strcmp(comando, "users") == 0)
       {
