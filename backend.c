@@ -411,14 +411,13 @@ void *trata_segundos(void *pdata)
 void *trata_promotor(void *pdata)
 {
   USER_DATA *data = pdata;
-  char nameproms[10][50];
   int PID_Promotor, prom[2];
   int nbytes;
   pipe(prom);
   PID_Promotor = fork();
   char ficheiro[100];
   strcpy(ficheiro, "Promotor/");
-  strcat(ficheiro, data->nomeprom);
+  strcat(ficheiro, *data->nomeprom);
 
   if(PID_Promotor == 0)
   {
@@ -430,19 +429,15 @@ void *trata_promotor(void *pdata)
   }
 
   close(prom[1]); //close write
-
-  strcpy(nameproms[*data->index], *data->nomeprom);
-  data->nomeprom[*data->index] = nameproms[*data->index];
   data->prom[*data->index] = PID_Promotor;
   
-  printf("A espera de input...\n");   
+  printf("A espera de input...\n");  
   while(kill(PID_Promotor, 0) == 0 && data->continua)
   {
     char buffer[100];
     nbytes = read(prom[0], buffer, sizeof(buffer));
     if(nbytes != 0)
     {
-      printf("A espera de input...\n");
       buffer[nbytes] = '\0';
       printf("%s\n", buffer);
     }
@@ -452,21 +447,6 @@ void *trata_promotor(void *pdata)
 
   close(prom[0]);
   wait(NULL);
-  for(int i = 0; i < *(data->nprom); i++)
-  {
-    int k = 0;
-    data->prom[i] = 0;
-    for(int j = 0; k < *(data->nprom); j++)
-    {
-        if(j == i)
-          k++;
-        strcpy(nameproms[j], nameproms[k]);
-        k++;
-    }
-
-    *data->nprom = *data->nprom - 1;
-    break;
-  }
   pthread_exit(NULL);
 }
 
@@ -483,6 +463,7 @@ int main(int argc, char *argv[], char *env[])
   char filename[3][50] = {'\0'};
   char NomeCli[10];
   bool available[10];
+  char nomeprom2[10][20];
   int nproms = 0;
   int bf;
   int tempo;
@@ -555,9 +536,12 @@ int main(int argc, char *argv[], char *env[])
                 if(available[i] == true)
                 {
                   index = i;
-                  nomeProm[quant] = temp;
+                  strcpy(nomeprom2[quant],  temp);
+                  nomeProm[quant] = nomeprom2[quant];
                   nproms++;
                   pthread_create(&promotor[quant], NULL, trata_promotor, &data);
+                  printf("NOME DO FICHEIRO = %s\n", nomeProm[quant]);
+                  printf("INDEX = %d\n", index);
                   break;
                 }
               }
@@ -587,15 +571,22 @@ int main(int argc, char *argv[], char *env[])
       }
       else if(strcmp(comando, "cancel") == 0)
       {
-        int nproms_temp = nproms;
-        for(int i = 0; i < nproms_temp; i++)
+        int indexes[10];
+        int toRemove = 0;
+        for(int i = 0; i < nproms; i++)
         {
           if(strcmp(user.input[1], nomeProm[i]) == 0)
           {
             kill(prom[i], SIGUSR1);
-            pthread_join(promotor[i], NULL);      
+            pthread_join(promotor[i], NULL);    
+            available[i] = true;
+            prom[i] = 0;
+            indexes[toRemove] = i;
+            toRemove++;
           }
         }
+        
+        nproms = nproms - toRemove;
       }
       else if(strcmp(comando, "users") == 0)
       {
