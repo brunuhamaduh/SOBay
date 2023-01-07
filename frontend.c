@@ -162,6 +162,17 @@ void *recebe(void *pdata)
   pthread_exit(NULL);
 }
 
+void *heartbeat(void *pdata)
+{
+  USER_DATA *data = pdata;
+
+  do
+  {
+    
+  } while (data->continua && data->forceExit);
+  pthread_exit(NULL);
+}
+
 int main(int argc, char* argv[])
 {
   int bf, caixa, feedback;
