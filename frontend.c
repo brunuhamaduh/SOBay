@@ -22,7 +22,9 @@ void *recebe(void *pdata)
 {
   USER_DATA *data = pdata;
   Item *item = malloc(0);
+  Discount discount;
   int feedback;
+  int n;
   char comando[20];
 
   do
@@ -105,7 +107,6 @@ void *recebe(void *pdata)
     }
     else if(strcmp(comando, "newitem") == 0)
     {
-      int n;
       item = realloc(item, sizeof(Item));
       n = read(data->caixa, item, sizeof(Item));
       if(n == sizeof(Item))
@@ -122,7 +123,6 @@ void *recebe(void *pdata)
     }
     else if(strcmp(comando, "solditem") == 0)
     {
-      int n;
       item = realloc(item, sizeof(Item));
       n = read(data->caixa, item, sizeof(Item));
       if(n == sizeof(Item))
@@ -133,7 +133,6 @@ void *recebe(void *pdata)
     }
     else if(strcmp(comando, "expireditem") == 0)
     {
-      int n;
       item = realloc(item, sizeof(Item));
       n = read(data->caixa, item, sizeof(Item));
       if(n == sizeof(Item))
@@ -153,6 +152,15 @@ void *recebe(void *pdata)
       printf("BANIDO TEMPORARIAMENTE!\n");
       printf("Clique ENTER para sair...\n");
       data->forceExit = 0;
+    }
+    else if(strcmp(comando, "discount") == 0)
+    {
+      n = read(data->caixa, &discount, sizeof(Discount));
+      if(n == sizeof(Discount))
+      {
+        printf("Novo desconto!\n");
+        printf("Categoria: %s Percentagem: %d Duracao: %d\n", discount.Categoria, discount.percentagem, discount.duracao);
+      }
     }
     
     fflush(stdout);

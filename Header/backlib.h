@@ -4,9 +4,8 @@
 typedef struct
 {
   char Nome[20], Categoria[20], seller[20], highestbidder[20];
-  int preco_base, preco_agora;
-  int ID, duracao;
-
+  int preco_base, preco_agora, ID, duracao, percentagem;
+  bool activeDiscount;
 } Item;
 
 typedef struct 
@@ -15,6 +14,13 @@ typedef struct
   char Username[20], Password[20];
   char input[6][20];
 } User;
+
+typedef struct
+{
+  char Categoria[50];
+  int percentagem;
+  int duracao;
+} Discount;
 
 int VerificaComandoAdmin(char *string, User *user);
 int saveItemsFile(char *filename, Item *Items, int Num_Items);
