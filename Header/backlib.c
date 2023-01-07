@@ -77,6 +77,9 @@ int loadItemsFile(char *pathname, Item **Items, int *lastID)
   {
     *Items = realloc(*Items, (i+1) * sizeof(Item));
     sscanf(buffer, "%d%s%s%d%d%d%s%s", &(*Items)[i].ID, (*Items)[i].Nome, (*Items)[i].Categoria, &(*Items)[i].preco_base, &(*Items)[i].preco_agora, &(*Items)[i].duracao, (*Items)[i].seller, (*Items)[i].highestbidder);
+    (*Items)[i].percentagem = 0;
+    (*Items)[i].duracaoDiscount = 0;
+    (*Items)[i].activeDiscount = false;
     *lastID = (*Items)[i].ID;
     i++;
   }

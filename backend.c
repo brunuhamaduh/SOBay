@@ -129,6 +129,7 @@ void *trata_comandos(void *pdata)
           data->Items[data->nitems - 1].duracao = atoi(data->user.input[5]);
           data->Items[data->nitems - 1].activeDiscount = false;
           data->Items[data->nitems - 1].percentagem = 0;
+          data->Items[data->nitems - 1].duracaoDiscount = 0;
           strcpy(data->Items[data->nitems - 1].seller, data->user.Username);
           strcpy(data->Items[data->nitems - 1].highestbidder, "-");
 
@@ -441,6 +442,7 @@ void *trata_promotor(void *pdata)
   while(kill(PID_Promotor, 0) == 0 && data->continua)
   {
     char buffer[100];
+    double calcPercentagem;
     nbytes = read(prom[0], &buffer, sizeof(buffer));
     if(nbytes != 0)
     {
@@ -452,9 +454,11 @@ void *trata_promotor(void *pdata)
         strcpy(discount.Categoria, token);
         token = strtok(NULL, " ");
         discount.percentagem = atoi(token);
+        calcPercentagem = 1 - (double)discount.percentagem / 100;
         token = strtok(NULL, " ");
         discount.duracao = atoi(token);
         strcpy(output, "discount");
+        printf("Categoria = %s Percentagem = %d Duracao = %d\n", discount.Categoria, discount.percentagem, discount.duracao);
 
         for(int i = 0; i < data->nitems; i++)
         {
@@ -463,8 +467,9 @@ void *trata_promotor(void *pdata)
             printf("ANTES: %d %d %d %d\n", data->Items[i].activeDiscount, data->Items[i].percentagem, data->Items[i].preco_base, data->Items[i].preco_agora);
             data->Items[i].activeDiscount = true;
             data->Items[i].percentagem = discount.percentagem;
-            data->Items[i].preco_base = data->Items[i].preco_base * (discount.percentagem / 100);
-            data->Items[i].preco_agora = data->Items[i].preco_agora * (discount.percentagem / 100);
+            data->Items[i].duracaoDiscount = discount.duracao;
+            data->Items[i].preco_base = data->Items[i].preco_base * calcPercentagem;
+            data->Items[i].preco_agora = data->Items[i].preco_agora * calcPercentagem;
             printf("DEPOIS: %d %d %d %d\n", data->Items[i].activeDiscount, data->Items[i].percentagem, data->Items[i].preco_base, data->Items[i].preco_agora);
           }
         }

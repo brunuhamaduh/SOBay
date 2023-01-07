@@ -4,7 +4,7 @@
 typedef struct
 {
   char Nome[20], Categoria[20], seller[20], highestbidder[20];
-  int preco_base, preco_agora, ID, duracao, percentagem;
+  int preco_base, preco_agora, ID, duracao, duracaoDiscount, percentagem;
   bool activeDiscount;
 } Item;
 
