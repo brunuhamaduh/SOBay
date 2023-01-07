@@ -521,40 +521,34 @@ int main(int argc, char *argv[], char *env[])
     {
       if(strcmp(comando, "reprom") == 0)
       {
+        char temp[50];
         FILE *fp = fopen(filename[2], "r");
-        int quant = 0, prom1, prom2;
+        int quant = 0;
+        
+        fp = fopen(filename[2], "r");
+
         if(fp != NULL)
         {
           while(fgets(buffer, sizeof(buffer), fp) != NULL)
           {
-            char temp[50];
             sscanf(buffer, "%s", temp);
-            if(strcmp(temp, "promotor_oficial") == 0)
-              prom1++;
-            else if(strcmp(temp, "black_friday") == 0)
-              prom2++;
-
             if(quant < 10)
             {
               for(int i = 0; i < 10; i++)
               {
-                if(available[i] == true && (prom1 != 0 || prom2 != 0))
+                if(available[i] == true && (strcmp(temp, "promotor_oficial") == 0 || strcmp(temp, "black_friday") == 0))
                 {
                   index = i;
                   strcpy(nomeprom2[quant],  temp);
-                  if(strcmp(nomeprom2[quant], "promotor_oficial") == 0)
-                    prom1--;
-                  else if(strcmp(nomeprom2[quant], "black_friday") == 0)
-                    prom2--;
                   nomeProm[quant] = nomeprom2[quant];
                   nproms++;
                   pthread_create(&promotor[quant], NULL, trata_promotor, &data);
+                  available[quant] = false;
+                  quant++;
                   break;
                 }
               }
             } 
-            available[quant] = false;
-            quant++;
             sleep(1);
           }
           fclose(fp);
