@@ -367,6 +367,11 @@ void *trata_segundos(void *pdata)
         {
           strcpy(comando, "solditem");
           updateUserBalance(data->Items[i].highestbidder, getUserBalance(data->Items[i].highestbidder) - data->Items[i].preco_base);
+          if(data->Items[i].activeDiscount == true)
+          {
+            calcPercentagem = 1 - (double)data->Items[i].percentagem / 100;
+            updateUserBalance(data->Items[i].seller, getUserBalance(data->Items[i].seller) + (data->Items[i].preco_base / calcPercentagem));
+          }
         }
         else
           strcpy(comando, "expireditem");
