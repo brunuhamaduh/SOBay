@@ -132,7 +132,7 @@ void *trata_comandos(void *pdata)
           strcpy(data->Items[data->nitems - 1].seller, data->user.Username);
           strcpy(data->Items[data->nitems - 1].highestbidder, "-");
 
-          saveItemsFile(data->userfilename, data->Items, data->nitems);
+          saveItemsFile(data->itemfilename, data->Items, data->nitems);
           write(fdcli, data->user.input[0], sizeof(data->user.input[0]));
           write(fdcli, &data->Items[data->nitems - 1].ID, sizeof(data->Items[data->nitems - 1].ID));
           close(fdcli);
