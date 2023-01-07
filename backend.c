@@ -416,13 +416,7 @@ void *trata_promotor(void *pdata)
   pipe(prom);
   char ficheiro[100];
   strcpy(ficheiro, "Promotor/");
-  for(int i = 0; i < *data->nprom; i++)
-  {
-    printf("PROM[%d] %s\n", i, data->nomeprom[i]);
-  }
   strcat(ficheiro, data->nomeprom[*data->index]);
-
-
 
   PID_Promotor = fork();
   if(PID_Promotor == 0)
@@ -526,10 +520,10 @@ int main(int argc, char *argv[], char *env[])
           {
             kill(prom[i], SIGUSR1);
             pthread_join(promotor[i], NULL);
-            available[i] = true;
           }
+          available[i] = true;
         }
-
+        nproms = 0;
         fp = fopen(filename[2], "r");
 
         if(fp != NULL)
