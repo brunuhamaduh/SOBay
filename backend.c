@@ -337,6 +337,7 @@ void *trata_segundos(void *pdata)
   USER_DATA *data = pdata;
   FILE *fp;
   char buffer[100];
+  double calcPercentagem;
 
   loadUsersFile(data->userfilename);
   fp = fopen("Ficheiros/tempo.txt", "r");
@@ -359,6 +360,7 @@ void *trata_segundos(void *pdata)
     for(int i = 0; i < data->nitems; i++)
     {
       data->Items[i].duracao = data->Items[i].duracao - 1;
+      data->Items[i].duracaoDiscount = data->Items[i].duracaoDiscount - 1;
       if(data->Items[i].duracao == 0)
       {
         if(strcmp(data->Items[i].highestbidder, "-") != 0)
@@ -396,6 +398,14 @@ void *trata_segundos(void *pdata)
         data->Items = realloc(data->Items, data->nitems * sizeof(Item));
         saveItemsFile(data->itemfilename, data->Items, data->nitems);
         saveUsersFile(data->userfilename);
+      }
+      else if(data->Items[i].duracaoDiscount == 0)
+      {
+        calcPercentagem = 1 - (double)data->Items[i].percentagem / 100;
+        data->Items[i].activeDiscount = false;
+        data->Items[i].percentagem = 0;
+        data->Items[i].preco_base = data->Items[i].preco_base / calcPercentagem;
+        data->Items[i].preco_agora = data->Items[i].preco_agora / calcPercentagem;
       }
     }
   } while (data->continua);
@@ -464,13 +474,11 @@ void *trata_promotor(void *pdata)
         {
           if(strcmp(discount.Categoria, data->Items[i].Categoria) == 0)
           {
-            printf("ANTES: %d %d %d %d\n", data->Items[i].activeDiscount, data->Items[i].percentagem, data->Items[i].preco_base, data->Items[i].preco_agora);
             data->Items[i].activeDiscount = true;
             data->Items[i].percentagem = discount.percentagem;
             data->Items[i].duracaoDiscount = discount.duracao;
             data->Items[i].preco_base = data->Items[i].preco_base * calcPercentagem;
             data->Items[i].preco_agora = data->Items[i].preco_agora * calcPercentagem;
-            printf("DEPOIS: %d %d %d %d\n", data->Items[i].activeDiscount, data->Items[i].percentagem, data->Items[i].preco_base, data->Items[i].preco_agora);
           }
         }
 
