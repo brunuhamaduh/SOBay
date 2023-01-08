@@ -8,18 +8,11 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 #include <pthread.h>
-#include "Header/backlib.h"
-
-typedef struct
-{
-  User user;
-  int continua, caixa, bf, forceExit, nheartbeat;
-  pthread_mutex_t *wait;
-} USER_DATA;
+#include "Header/lib.h"
 
 void *recebe(void *pdata)
 {
-  USER_DATA *data = pdata;
+  USER_DATA2 *data = pdata;
   Item *item = malloc(0);
   Discount discount;
   int feedback, n;
@@ -181,7 +174,7 @@ void *recebe(void *pdata)
 
 void *heartbeat(void *pdata)
 {
-  USER_DATA *data = pdata;
+  USER_DATA2 *data = pdata;
   do
   {
     pthread_mutex_lock(data->wait);
@@ -203,7 +196,7 @@ int main(int argc, char* argv[])
   int bf, caixa, feedback;
   char comando[100], NomeCaixa[10];
   User user;
-  USER_DATA data;
+  USER_DATA2 data;
   pthread_mutex_t wait;
   pthread_t thread[2];
 

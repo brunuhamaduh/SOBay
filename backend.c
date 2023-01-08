@@ -6,20 +6,8 @@
 #include <pthread.h>
 #include <fcntl.h> 
 #include "Header/users_lib.h"
-#include "Header/backlib.h"
+#include "Header/lib.h"
 #define MAX 100
-
-typedef struct
-{
-  int nitems, continua, bf, maxheartbeat;
-  int *index, *tempo, *cliente, *nclientes, *heartbeat, *prom, *nprom;
-  char userfilename[50], promfilename[50], itemfilename[50];
-  char **nomecliente, **nomeprom;
-  bool *available;
-  Item *Items;
-  User user;
-  pthread_mutex_t *wait;
-} USER_DATA;
 
 void *trata_comandos(void *pdata)
 {
