@@ -25,6 +25,8 @@ typedef struct
   char **nomecliente;
   int *cliente;
   int *nclientes;
+  int *heartbeat;
+  int maxheartbeat;
   char **nomeprom; //ficheiro
   int *prom; //pid
   int *nprom; //quantidade
@@ -347,6 +349,17 @@ void *trata_comandos(void *pdata)
           write(fdcli, data->user.input[0], sizeof(data->user.input[0]));
           write(fdcli, feedback2, sizeof(feedback2));
         }
+        else if(strcmp(data->user.input[0], "HEARTBEAT") == 0)
+        {
+          for(int i = 0; i < *data->nclientes; i++)
+          {
+            if(data->user.pid == data->cliente[i])
+            {
+              data->heartbeat[i] = 0;
+              break;
+            }
+          }
+        }
         close(fdcli);
       }
     }
@@ -359,8 +372,9 @@ void *trata_segundos(void *pdata)
 {
   USER_DATA *data = pdata;
   FILE *fp;
-  char buffer[100];
+  char buffer[100], comando[20], NomeCli[10];
   double calcPercentagem;
+  int j, k, fdcli;
 
   loadUsersFile(data->userfilename);
   fp = fopen("Ficheiros/tempo.txt", "r");
@@ -376,10 +390,33 @@ void *trata_segundos(void *pdata)
   
   do
   {
-    int j, k = 0, fdcli;
-    char comando[20], NomeCli[10];
+    k = 0;
     sleep(1);
     *data->tempo = *data->tempo + 1;
+    
+    for(int i = 0; i < *data->nclientes; i++)
+    {
+      data->heartbeat[i] = data->heartbeat[i] + 1;
+    }
+
+    for(int i = 0; i < *data->nclientes; i++)
+    {
+      if(data->heartbeat[i] > data->maxheartbeat)
+      {
+        sprintf(NomeCli, "CLI%d", data->cliente[i]);
+        printf("Cliente %s saiu sem avisar!\n", data->nomecliente[i]);
+        unlink(NomeCli);
+        for(int j = i; j < *(data->nclientes); j++)
+        {
+          data->nomecliente[j] = data->nomecliente[j + 1];
+          data->heartbeat[j] = data->heartbeat[j + 1];
+          data->cliente[j] = data->cliente[j + 1];
+        }
+        *(data->nclientes) = *(data->nclientes) - 1;
+        i = 0;
+      }
+    }
+
     for(int i = 0; i < data->nitems; i++)
     {
       if(data->Items[i].duracao > 0)
@@ -554,7 +591,7 @@ void *trata_promotor(void *pdata)
 int main(int argc, char *argv[], char *env[])
 {
   int nclientes = 0, index = 0, nproms = 0, bf, tempo;
-  int cliente[20] = {0}, prom[20] = {0};
+  int cliente[20] = {0}, prom[20] = {0}, heartbeat[20] = {0};
   char comando[MAX], buffer[MAX];
   char *nomecliente[20] = {'\0'};
   char *nomeProm[20] = {'\0'};
@@ -592,6 +629,11 @@ int main(int argc, char *argv[], char *env[])
   data.nomeprom = nomeProm;
   data.index = &index;
   data.available = available;
+  data.heartbeat = heartbeat;
+  if(getenv("HEARTBEAT") != NULL)
+    data.maxheartbeat = atoi(getenv("HEARTBEAT"));
+  else
+    data.maxheartbeat = 10;
 
   strcpy(data.userfilename, filename[0]);
   strcpy(data.itemfilename, filename[1]);
@@ -702,13 +744,6 @@ int main(int argc, char *argv[], char *env[])
         for(int i = 0; i < data.nitems; i++)
         {
           printf("|%-2.2d|%-12.12s|%-9.9s|%-6.6d|%-6.6d|%-3.3d|%-6.6s|%-7.7s|\n", data.Items[i].ID, data.Items[i].Nome, data.Items[i].Categoria, data.Items[i].preco_base, data.Items[i].preco_agora, data.Items[i].duracao, data.Items[i].seller, data.Items[i].highestbidder);
-        }
-      }
-      else if(strcmp(comando, "prom2") == 0)
-      {
-        for(int i = 0; i < data.nitems; i++)
-        {
-          printf("Categoria = %s %d\n", data.Items[i].Categoria, data.Items[i].duracaoDiscount);
         }
       }
       else if(strcmp(comando, "kick") == 0)

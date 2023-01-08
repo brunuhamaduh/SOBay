@@ -22,7 +22,7 @@ int VerificaComandoAdmin(char *string, User *user)
     token = strtok(NULL, " ");
   }
 
-  if(strcmp(final[0], "users") == 0 || strcmp(final[0], "prom") == 0 || strcmp(final[0], "reprom") == 0 || strcmp(final[0], "items") == 0 || strcmp(final[0], "list") == 0 || strcmp(final[0], "close") == 0 || strcmp(final[0], "prom2") == 0)
+  if(strcmp(final[0], "users") == 0 || strcmp(final[0], "prom") == 0 || strcmp(final[0], "reprom") == 0 || strcmp(final[0], "items") == 0 || strcmp(final[0], "list") == 0 || strcmp(final[0], "close") == 0)
   {
     if(quantidade == 1)
     {

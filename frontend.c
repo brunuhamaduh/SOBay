@@ -13,8 +13,11 @@
 typedef struct
 {
   int continua;
+  User user;
   int caixa;
+  int bf;
   int forceExit;
+  int nheartbeat;
   pthread_mutex_t *wait;
 } USER_DATA;
 
@@ -186,10 +189,16 @@ void *recebe(void *pdata)
 void *heartbeat(void *pdata)
 {
   USER_DATA *data = pdata;
-
   do
   {
-    
+    strcpy(data->user.input[0], "HEARTBEAT");
+    write(data->bf, &data->user, sizeof(data->user));
+    for(int i = 0; i < data->nheartbeat; i++)
+    {
+      sleep(1);
+      if(!(data->continua && data->forceExit))
+        break;
+    }
   } while (data->continua && data->forceExit);
   pthread_exit(NULL);
 }
@@ -201,7 +210,7 @@ int main(int argc, char* argv[])
   User user;
   USER_DATA data;
   pthread_mutex_t wait;
-  pthread_t thread;
+  pthread_t thread[2];
 
   if(argc != 3)
     Abort("[ERRO] Sintaxe Errada\nSintaxe Correta: ./frontend <USERNAME> <PASSWORD>\n");
@@ -239,10 +248,18 @@ int main(int argc, char* argv[])
   
   data.continua = 1;
   data.caixa = caixa;
+  data.bf = bf;
   data.wait = &wait;
   data.forceExit = 1;
+  data.user = user;
+  
+  if(getenv("HEARTBEAT") != NULL)
+    data.nheartbeat = atoi(getenv("HEARTBEAT"));
+  else
+    data.nheartbeat = 10;
 
-  pthread_create(&thread, NULL, recebe, &data);
+  pthread_create(&thread[0], NULL, recebe, &data);
+  pthread_create(&thread[1], NULL, heartbeat, &data);
 
   do
   {
@@ -255,8 +272,8 @@ int main(int argc, char* argv[])
   } while(strcmp(comando, "exit") != 0 && data.forceExit != 0);
 
   data.continua = 0;
-  pthread_join(thread, NULL);
-
+  pthread_join(thread[0], NULL);
+  pthread_join(thread[1], NULL);
   pthread_mutex_destroy(&wait);
 
   close(caixa);
