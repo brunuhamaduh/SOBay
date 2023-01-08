@@ -134,7 +134,11 @@ void *recebe(void *pdata)
         read(data->caixa, item, sizeof(Item) * feedback);
         for(int i = 0; i < feedback; i++)
         {
-          printf("|%-2.2d|%-12.12s|%-9.9s|%-6.6d|%-6.6d|%-3.3d|%-6.6s|%-7.7s|\n", item[i].ID, item[i].Nome, item[i].Categoria, item[i].preco_base, item[i].preco_agora, item[i].duracao, item[i].seller, item[i].highestbidder);
+          printf("|%-2.2d|%-12.12s|%-9.9s|%-6.6d|%-6.6d|%-3.3d|%-6.6s|%-7.7s|", item[i].ID, item[i].Nome, item[i].Categoria, item[i].preco_base, item[i].preco_agora, item[i].duracao, item[i].seller, item[i].highestbidder);
+          if(item[i].activeDiscount)
+            printf("EM DESCONTO\n");
+          else
+            printf("\n");
         }
       }
       else

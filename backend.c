@@ -167,7 +167,11 @@ int main(int argc, char *argv[], char *env[])
           printf("Nao existem produtos a serem vendidos\n");
         for(int i = 0; i < data.nitems; i++)
         {
-          printf("|%-2.2d|%-12.12s|%-9.9s|%-6.6d|%-6.6d|%-3.3d|%-6.6s|%-7.7s|\n", data.Items[i].ID, data.Items[i].Nome, data.Items[i].Categoria, data.Items[i].preco_base, data.Items[i].preco_agora, data.Items[i].duracao, data.Items[i].seller, data.Items[i].highestbidder);
+          printf("|%-2.2d|%-12.12s|%-9.9s|%-6.6d|%-6.6d|%-3.3d|%-6.6s|%-7.7s|", data.Items[i].ID, data.Items[i].Nome, data.Items[i].Categoria, data.Items[i].preco_base, data.Items[i].preco_agora, data.Items[i].duracao, data.Items[i].seller, data.Items[i].highestbidder);
+          if(data.Items[i].activeDiscount)
+            printf("EM DESCONTO\n");
+          else
+            printf("\n");
         }
       }
       else if(strcmp(comando, "kick") == 0)
