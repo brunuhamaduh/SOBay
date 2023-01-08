@@ -34,6 +34,7 @@ void *recebe(void *pdata)
   do
   {
     read(data->caixa, comando, sizeof(comando));
+    pthread_mutex_lock(data->wait);
     if(strcmp(comando, "add") == 0 || strcmp(comando, "cash") == 0)
     {
       read(data->caixa, &feedback, sizeof(feedback));
@@ -180,6 +181,7 @@ void *recebe(void *pdata)
     }
     
     fflush(stdout);
+    pthread_mutex_unlock(data->wait);
   } while (data->continua && data->forceExit);
   
   free(item);
@@ -191,14 +193,16 @@ void *heartbeat(void *pdata)
   USER_DATA *data = pdata;
   do
   {
-    strcpy(data->user.input[0], "HEARTBEAT");
-    write(data->bf, &data->user, sizeof(data->user));
     for(int i = 0; i < data->nheartbeat; i++)
     {
       sleep(1);
       if(!(data->continua && data->forceExit))
         break;
     }
+    pthread_mutex_lock(data->wait);
+    strcpy(data->user.input[0], "HEARTBEAT");
+    write(data->bf, &data->user, sizeof(data->user));
+    pthread_mutex_unlock(data->wait);
   } while (data->continua && data->forceExit);
   pthread_exit(NULL);
 }

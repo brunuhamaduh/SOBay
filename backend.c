@@ -54,6 +54,7 @@ void *trata_comandos(void *pdata)
   do
   {
     n = read(data->bf, &data->user, sizeof(User)); 
+    pthread_mutex_lock(data->wait);
     if(n == sizeof(User))
     {
       sprintf(NomeCli, "CLI%d", data->user.pid);
@@ -363,6 +364,7 @@ void *trata_comandos(void *pdata)
         close(fdcli);
       }
     }
+    pthread_mutex_unlock(data->wait);
   } while (data->continua);
 
   pthread_exit(NULL);
@@ -393,6 +395,8 @@ void *trata_segundos(void *pdata)
     k = 0;
     sleep(1);
     *data->tempo = *data->tempo + 1;
+
+    pthread_mutex_lock(data->wait);
     
     for(int i = 0; i < *data->nclientes; i++)
     {
@@ -485,6 +489,7 @@ void *trata_segundos(void *pdata)
         }
       }
     }
+    pthread_mutex_unlock(data->wait);
   } while (data->continua);
 
   fp = fopen("Ficheiros/tempo.txt", "w");
@@ -543,6 +548,7 @@ void *trata_promotor(void *pdata)
         token = strtok(NULL, " ");
         discount.duracao = atoi(token);
 
+        pthread_mutex_lock(data->wait);
         for(int i = 0; i < data->nitems; i++)
         {
           if(strcmp(discount.Categoria, data->Items[i].Categoria) == 0 && discount.percentagem <= data->Items[i].percentagem && data->Items[i].activeDiscount == true)
@@ -567,6 +573,8 @@ void *trata_promotor(void *pdata)
               data->Items[i].preco_agora = data->Items[i].preco_agora * calcPercentagem;
             }
           }
+
+          pthread_mutex_unlock(data->wait);
 
           for (int i = 0; i < *data->nclientes; i++)
           {
