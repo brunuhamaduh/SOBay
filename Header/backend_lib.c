@@ -444,11 +444,9 @@ void *trata_comandos(void *pdata)
                 if(strcmp(data->Items[i].seller, data->user.Username) == 0)
                   strcpy(feedback2, "Own Buy");
                 else
-                  strcpy(feedback2, "Low price");
-                
+                  strcpy(feedback2, "Low price"); 
                 break;
               }
-              printf("Compraste gj\n");
             }
           }
           write(fdcli, data->user.input[0], sizeof(data->user.input[0]));
