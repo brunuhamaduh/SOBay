@@ -11,25 +11,13 @@
 
 typedef struct
 {
-  int *tempo;
+  int nitems, continua, bf, maxheartbeat;
+  int *index, *tempo, *cliente, *nclientes, *heartbeat, *prom, *nprom;
+  char userfilename[50], promfilename[50], itemfilename[50];
+  char **nomecliente, **nomeprom;
+  bool *available;
   Item *Items;
   User user;
-  int nitems;
-  int continua;
-  int bf;
-  int *index;
-  char userfilename[50];
-  char promfilename[50];
-  char itemfilename[50];
-  bool *available;
-  char **nomecliente;
-  int *cliente;
-  int *nclientes;
-  int *heartbeat;
-  int maxheartbeat;
-  char **nomeprom; //ficheiro
-  int *prom; //pid
-  int *nprom; //quantidade
   pthread_mutex_t *wait;
 } USER_DATA;
 
@@ -37,16 +25,10 @@ void *trata_comandos(void *pdata)
 {
   USER_DATA *data = pdata;
   data->Items = malloc(0);
-  int n;
-  int fdcli;
-  int feedback;
-  int lastID;
-  int amountDiscount = 0;
+  int n, fdcli, feedback, lastID, amountDiscount = 0, duracaoDiscount = 0;
   double calcPercentagem = 1;
-  int duracaoDiscount = 0;
   bool activeDiscount = false;
-  char NomeCli[10];
-  char comando[20];
+  char NomeCli[10], comando[20];
   char Nomes[20][20];
   data->nitems = loadItemsFile(data->itemfilename, &data->Items, &lastID);
   loadUsersFile(data->userfilename);

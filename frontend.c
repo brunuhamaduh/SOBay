@@ -12,12 +12,8 @@
 
 typedef struct
 {
-  int continua;
   User user;
-  int caixa;
-  int bf;
-  int forceExit;
-  int nheartbeat;
+  int continua, caixa, bf, forceExit, nheartbeat;
   pthread_mutex_t *wait;
 } USER_DATA;
 
@@ -26,11 +22,8 @@ void *recebe(void *pdata)
   USER_DATA *data = pdata;
   Item *item = malloc(0);
   Discount discount;
-  int feedback;
-  int n;
-  char comando[20];
-  char str[20], last[20];
-
+  int feedback, n;
+  char comando[20], comando2[20], str[20], last[20];
   do
   {
     read(data->caixa, comando, sizeof(comando));
@@ -52,7 +45,6 @@ void *recebe(void *pdata)
     }
     else if(strcmp(comando, "list") == 0 || strcmp(comando, "licat") == 0 || strcmp(comando, "lisel") == 0 || strcmp(comando, "lival") == 0 || strcmp(comando, "litime") == 0)
     {
-      char comando2[20];
       read(data->caixa, &feedback, sizeof(feedback));
       read(data->caixa, comando2, sizeof(comando2));
       if(feedback != 0)
@@ -94,20 +86,19 @@ void *recebe(void *pdata)
     }
     else if(strcmp(comando, "buy") == 0)
     {
-      char feedback2[20];
-      read(data->caixa, feedback2, sizeof(feedback2));
+      read(data->caixa, comando2, sizeof(comando2));
 
-      if(strcmp(feedback2, "Own Buy") == 0)
+      if(strcmp(comando2, "Own Buy") == 0)
         printf("[AVISO] Nao podes comprar uma coisa que estas a vender\n");
-      else if(strcmp(feedback2, "Success") == 0)
+      else if(strcmp(comando2, "Success") == 0)
         printf("[SUCESSO] Es o bidder mais alto\n");
-      else if(strcmp(feedback2, "Success Bought") == 0)
+      else if(strcmp(comando2, "Success Bought") == 0)
         printf("[SUCESSO] Adquirido com sucesso\n");
-      else if(strcmp(feedback2, "Low price") == 0)
+      else if(strcmp(comando2, "Low price") == 0)
         printf("[AVISO] Tens que aumentar o preco\n");
-      else if(strcmp(feedback2, "Not Found") == 0)
+      else if(strcmp(comando2, "Not Found") == 0)
         printf("[AVISO] ID Invalido\n");
-      else if(strcmp(feedback2, "Broke") == 0)
+      else if(strcmp(comando2, "Broke") == 0)
         printf("[AVISO] Nao tem saldo disponivel");
     }
     else if(strcmp(comando, "newitem") == 0)
