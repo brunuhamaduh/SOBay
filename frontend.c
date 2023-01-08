@@ -184,16 +184,16 @@ void *heartbeat(void *pdata)
   USER_DATA *data = pdata;
   do
   {
+    pthread_mutex_lock(data->wait);
+    strcpy(data->user.input[0], "HEARTBEAT");
+    write(data->bf, &data->user, sizeof(data->user));
+    pthread_mutex_unlock(data->wait);
     for(int i = 0; i < data->nheartbeat; i++)
     {
       sleep(1);
       if(!(data->continua && data->forceExit))
         break;
     }
-    pthread_mutex_lock(data->wait);
-    strcpy(data->user.input[0], "HEARTBEAT");
-    write(data->bf, &data->user, sizeof(data->user));
-    pthread_mutex_unlock(data->wait);
   } while (data->continua && data->forceExit);
   pthread_exit(NULL);
 }

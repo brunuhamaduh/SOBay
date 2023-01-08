@@ -339,6 +339,7 @@ void *trata_comandos(void *pdata)
             if(data->user.pid == data->cliente[i])
             {
               data->heartbeat[i] = 0;
+              printf("recebi\n");
               break;
             }
           }
@@ -392,7 +393,7 @@ void *trata_segundos(void *pdata)
         sprintf(NomeCli, "CLI%d", data->cliente[i]);
         printf("Cliente %s saiu sem avisar!\n", data->nomecliente[i]);
         unlink(NomeCli);
-        for(int j = i; j < *(data->nclientes); j++)
+        for(int j = i; j < *(data->nclientes) - 1; j++)
         {
           data->nomecliente[j] = data->nomecliente[j + 1];
           data->heartbeat[j] = data->heartbeat[j + 1];
