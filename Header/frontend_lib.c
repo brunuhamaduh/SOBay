@@ -191,7 +191,7 @@ void *recebe(void *pdata)
       if(n == sizeof(Item))
       {
         printf("[Item vendido]\n");
-        printf("ID: %d Nome: %s Categoria: %s Preco: %d Buyer: %s\n", item[0].ID, item[0].Nome, item[0].Categoria, item[0].preco_base, item[0].highestbidder);
+        printf("ID: %d Nome: %s Categoria: %s Preco: %d Buyer: %s\n", item[0].ID, item[0].Nome, item[0].Categoria, item[0].preco_agora, item[0].highestbidder);
       }
     }
     else if(strcmp(comando, "expireditem") == 0)
