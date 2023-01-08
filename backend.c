@@ -39,6 +39,10 @@ void *trata_comandos(void *pdata)
   int fdcli;
   int feedback;
   int lastID;
+  int amountDiscount = 0;
+  double calcPercentagem = 0;
+  int duracaoDiscount = 0;
+  bool activeDiscount = false;
   char NomeCli[10];
   char comando[20];
   char Nomes[20][20];
@@ -119,17 +123,37 @@ void *trata_comandos(void *pdata)
         }
         else if(strcmp(data->user.input[0], "sell") == 0)
         {
+          for(int z = 0; z < data->nitems; z++)
+          {
+            if(strcmp(data->Items[z].Categoria, data->user.input[2]) == 0)
+            {
+              activeDiscount = data->Items[z].activeDiscount;
+              amountDiscount = data->Items[z].percentagem;
+              duracaoDiscount = data->Items[z].duracaoDiscount;
+              break;
+            }
+          }
+
           data->nitems = data->nitems + 1;
           data->Items = realloc(data->Items, data->nitems * sizeof(Item));
           data->Items[data->nitems - 1].ID = ++lastID;
           strcpy(data->Items[data->nitems - 1].Nome, data->user.input[1]); 
           strcpy(data->Items[data->nitems - 1].Categoria, data->user.input[2]);
-          data->Items[data->nitems - 1].preco_base = atoi(data->user.input[3]);
-          data->Items[data->nitems - 1].preco_agora = atoi(data->user.input[4]);
+          if(activeDiscount)
+          {
+            calcPercentagem = 1 - (double)amountDiscount / 100;
+            data->Items[data->nitems - 1].preco_base = atoi(data->user.input[3]) / calcPercentagem;
+            data->Items[data->nitems - 1].preco_agora = atoi(data->user.input[4]) / calcPercentagem;
+          }
+          else
+          {
+            data->Items[data->nitems - 1].preco_base = atoi(data->user.input[3]);
+            data->Items[data->nitems - 1].preco_agora = atoi(data->user.input[4]);
+          }
+          data->Items[data->nitems - 1].activeDiscount = activeDiscount;
+          data->Items[data->nitems - 1].percentagem = amountDiscount;
+          data->Items[data->nitems - 1].duracaoDiscount = duracaoDiscount;
           data->Items[data->nitems - 1].duracao = atoi(data->user.input[5]);
-          data->Items[data->nitems - 1].activeDiscount = false;
-          data->Items[data->nitems - 1].percentagem = 0;
-          data->Items[data->nitems - 1].duracaoDiscount = 0;
           strcpy(data->Items[data->nitems - 1].seller, data->user.Username);
           strcpy(data->Items[data->nitems - 1].highestbidder, "-");
 
@@ -263,6 +287,11 @@ void *trata_comandos(void *pdata)
                   int k = 0;
                   
                   updateUserBalance(data->user.Username, getUserBalance(data->user.Username) - data->Items[i].preco_agora);
+                  if(data->Items[i].activeDiscount == true)
+                  {
+                    calcPercentagem = 1 - (double)data->Items[i].percentagem / 100;
+                    updateUserBalance(data->Items[i].seller, getUserBalance(data->Items[i].seller) + (data->Items[i].preco_base / calcPercentagem));
+                  }
                   
                   Item *temp = malloc(sizeof(Item));
 
@@ -359,8 +388,11 @@ void *trata_segundos(void *pdata)
     *data->tempo = *data->tempo + 1;
     for(int i = 0; i < data->nitems; i++)
     {
-      data->Items[i].duracao = data->Items[i].duracao - 1;
-      data->Items[i].duracaoDiscount = data->Items[i].duracaoDiscount - 1;
+      if(data->Items[i].duracao > 0)
+        data->Items[i].duracao = data->Items[i].duracao - 1;
+      if(data->Items[i].duracaoDiscount > 0)
+        data->Items[i].duracaoDiscount = data->Items[i].duracaoDiscount - 1;
+      
       if(data->Items[i].duracao == 0)
       {
         if(strcmp(data->Items[i].highestbidder, "-") != 0)
@@ -404,13 +436,22 @@ void *trata_segundos(void *pdata)
         saveItemsFile(data->itemfilename, data->Items, data->nitems);
         saveUsersFile(data->userfilename);
       }
-      else if(data->Items[i].duracaoDiscount == 0)
+      else if(data->Items[i].duracaoDiscount == 0 && data->Items[i].activeDiscount)
       {
         calcPercentagem = 1 - (double)data->Items[i].percentagem / 100;
         data->Items[i].activeDiscount = false;
         data->Items[i].percentagem = 0;
         data->Items[i].preco_base = data->Items[i].preco_base / calcPercentagem;
         data->Items[i].preco_agora = data->Items[i].preco_agora / calcPercentagem;
+        strcpy(comando, "expireddiscount");
+        for (int j = 0; j < *(data->nclientes); j++)
+        {
+          sprintf(NomeCli, "CLI%d", data->cliente[j]);
+          fdcli = open(NomeCli, O_WRONLY);
+          write(fdcli, comando, sizeof(comando));
+          write(fdcli, data->Items[i].Categoria, sizeof(data->Items[i].Categoria));
+          close(fdcli);
+        }
       }
     }
   } while (data->continua);
@@ -431,13 +472,13 @@ void *trata_promotor(void *pdata)
 {
   USER_DATA *data = pdata;
   Discount discount;
-  int PID_Promotor, prom[2];
-  int nbytes, fdcli;
+  int PID_Promotor, nbytes, fdcli;
+  int prom[2];
+  char output[20], NomeCli[50], buffer[100], ficheiro[100];
   char *token;
-  char output[20];
-  char NomeCli[50];
+  double calcPercentagem;
+  bool change = true;
   pipe(prom);
-  char ficheiro[100];
   strcpy(ficheiro, "Promotor/");
   strcat(ficheiro, data->nomeprom[*data->index]);
 
@@ -456,8 +497,6 @@ void *trata_promotor(void *pdata)
   
   while(kill(PID_Promotor, 0) == 0 && data->continua)
   {
-    char buffer[100];
-    double calcPercentagem;
     nbytes = read(prom[0], &buffer, sizeof(buffer));
     if(nbytes != 0)
     {
@@ -472,28 +511,40 @@ void *trata_promotor(void *pdata)
         calcPercentagem = 1 - (double)discount.percentagem / 100;
         token = strtok(NULL, " ");
         discount.duracao = atoi(token);
-        strcpy(output, "discount");
-        printf("Categoria = %s Percentagem = %d Duracao = %d\n", discount.Categoria, discount.percentagem, discount.duracao);
 
         for(int i = 0; i < data->nitems; i++)
         {
-          if(strcmp(discount.Categoria, data->Items[i].Categoria) == 0)
+          if(strcmp(discount.Categoria, data->Items[i].Categoria) == 0 && discount.percentagem <= data->Items[i].percentagem && data->Items[i].activeDiscount == true)
           {
-            data->Items[i].activeDiscount = true;
-            data->Items[i].percentagem = discount.percentagem;
-            data->Items[i].duracaoDiscount = discount.duracao;
-            data->Items[i].preco_base = data->Items[i].preco_base * calcPercentagem;
-            data->Items[i].preco_agora = data->Items[i].preco_agora * calcPercentagem;
+            change = false;
+            break;
           }
         }
-
-        for (int i = 0; i < *data->nclientes; i++)
+        
+        if(change)
         {
-          sprintf(NomeCli, "CLI%d", data->cliente[i]);
-          fdcli = open(NomeCli, O_WRONLY);
-          write(fdcli, output, sizeof(output));
-          write(fdcli, &discount, sizeof(Discount));
-          close(fdcli);
+          strcpy(output, "discount");
+
+          for(int i = 0; i < data->nitems; i++)
+          {
+            if(strcmp(discount.Categoria, data->Items[i].Categoria) == 0)
+            {
+              data->Items[i].activeDiscount = true;
+              data->Items[i].percentagem = discount.percentagem;
+              data->Items[i].duracaoDiscount = discount.duracao;
+              data->Items[i].preco_base = data->Items[i].preco_base * calcPercentagem;
+              data->Items[i].preco_agora = data->Items[i].preco_agora * calcPercentagem;
+            }
+          }
+
+          for (int i = 0; i < *data->nclientes; i++)
+          {
+            sprintf(NomeCli, "CLI%d", data->cliente[i]);
+            fdcli = open(NomeCli, O_WRONLY);
+            write(fdcli, output, sizeof(output));
+            write(fdcli, &discount, sizeof(Discount));
+            close(fdcli);
+          }
         }
       }
     }
@@ -657,6 +708,13 @@ int main(int argc, char *argv[], char *env[])
         for(int i = 0; i < data.nitems; i++)
         {
           printf("|%-2.2d|%-12.12s|%-9.9s|%-6.6d|%-6.6d|%-3.3d|%-6.6s|%-7.7s|\n", data.Items[i].ID, data.Items[i].Nome, data.Items[i].Categoria, data.Items[i].preco_base, data.Items[i].preco_agora, data.Items[i].duracao, data.Items[i].seller, data.Items[i].highestbidder);
+        }
+      }
+      else if(strcmp(comando, "prom2") == 0)
+      {
+        for(int i = 0; i < data.nitems; i++)
+        {
+          printf("Categoria = %s %d\n", data.Items[i].Categoria, data.Items[i].duracaoDiscount);
         }
       }
       else if(strcmp(comando, "kick") == 0)

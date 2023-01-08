@@ -26,6 +26,7 @@ void *recebe(void *pdata)
   int feedback;
   int n;
   char comando[20];
+  char str[20], last[20];
 
   do
   {
@@ -160,6 +161,18 @@ void *recebe(void *pdata)
       {
         printf("Novo desconto!\n");
         printf("Categoria: %s Percentagem: %d Duracao: %d\n", discount.Categoria, discount.percentagem, discount.duracao);
+      }
+    }
+    else if(strcmp(comando, "expireddiscount") == 0)
+    {
+      n = read(data->caixa, str, sizeof(str));
+      if(n == sizeof(str))
+      {
+        if(strcmp(last, str) != 0)
+        {
+          printf("Desconto acabou na categoria %s\n", str);
+          strcpy(last, str);
+        }
       }
     }
     
