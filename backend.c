@@ -339,7 +339,6 @@ void *trata_comandos(void *pdata)
             if(data->user.pid == data->cliente[i])
             {
               data->heartbeat[i] = 0;
-              printf("recebi\n");
               break;
             }
           }
@@ -640,6 +639,8 @@ int main(int argc, char *argv[], char *env[])
   {
     fflush(stdout);
     fgets(comando, MAX, stdin);
+    if(strcmp(comando, "\n") == 0)
+      continue;
     comando[strcspn(comando, "\n")] = '\0'; //retira a newline do fgets;
     
     if(!VerificaComandoAdmin(comando, &user))
