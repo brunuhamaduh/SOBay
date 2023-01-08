@@ -208,9 +208,6 @@ int main(int argc, char *argv[], char *env[])
   data.continua = 0;
   write(bf, &temp, sizeof(User));
 
-  pthread_join(thread[0], NULL);
-  pthread_join(thread[1], NULL);
-
   for(int i = 0; i < 10; i++)
   {
     if(prom[i] != 0)
@@ -220,7 +217,10 @@ int main(int argc, char *argv[], char *env[])
       available[i] = true;
     }
   }
-  
+
+  pthread_join(thread[0], NULL);
+  pthread_join(thread[1], NULL);
+
   pthread_mutex_destroy(&wait);
 
   int fdcli;
