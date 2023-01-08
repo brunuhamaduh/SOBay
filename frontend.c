@@ -259,11 +259,13 @@ int main(int argc, char* argv[])
   do
   {
     fgets(comando, 100, stdin);
+    pthread_mutex_lock(&wait);
     if(strcmp(comando, "\n") == 0)
       continue;
     comando[strcspn(comando, "\n")] = '\0'; //tira "\n" do input;
     if(VerificaComando(comando, &user))
       write(bf, &user, sizeof(user));
+    pthread_mutex_unlock(&wait);
   } while(strcmp(comando, "exit") != 0 && data.forceExit != 0);
 
   data.continua = 0;

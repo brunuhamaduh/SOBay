@@ -646,6 +646,7 @@ int main(int argc, char *argv[], char *env[])
       printf("Comando inválido\n");
     else
     {
+      pthread_mutex_lock(&wait);
       if(strcmp(comando, "reprom") == 0)
       {
         for(int i = 0; i < 10; i++)
@@ -769,6 +770,7 @@ int main(int argc, char *argv[], char *env[])
         }
       }
     }
+    pthread_mutex_unlock(&wait);
   } while(strcmp(comando, "close") != 0);
 
   data.continua = 0;
