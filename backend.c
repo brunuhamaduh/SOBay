@@ -495,7 +495,7 @@ void *trata_segundos(void *pdata)
     fprintf(fp, "%d", *data->tempo);
     fclose(fp);
   }
-  
+
   pthread_exit(NULL);
 }
 
