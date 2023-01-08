@@ -65,13 +65,11 @@ int saveItemsFile(char * filename, Item *Items, int Num_Items)
     {
       fprintf(fp, "%d %s %s %d %d %d %s %s\n", Items[i].ID, Items[i].Nome, Items[i].Categoria, Items[i].preco_base, Items[i].preco_agora, Items[i].duracao, Items[i].seller, Items[i].highestbidder);
     }
-    /*
     else
     {
       calcPercentagem = 1 - (double)Items[i].percentagem / 100;
       fprintf(fp, "%d %s %s %d %d %d %s %s\n", Items[i].ID, Items[i].Nome, Items[i].Categoria, Items[i].preco_base / calcPercentagem, Items[i].preco_agora / calcPercentagem, Items[i].duracao, Items[i].seller, Items[i].highestbidder);
     }
-    */
   }
 
   fclose(fp);
@@ -472,7 +470,8 @@ void *trata_comandos(void *pdata)
     }
     pthread_mutex_unlock(data->wait);
   } while (data->continua);
-
+  
+  saveItemsFile(data->itemfilename, data->Items, data->nitems);
   pthread_exit(NULL);
 }
 
