@@ -54,14 +54,24 @@ bool VerificaComando(char *string, User *user)
 int saveItemsFile(char * filename, Item *Items, int Num_Items)
 {
   FILE *fp;
-
+  double calcPercentagem;
   fp = fopen(filename, "w");
   if(fp == NULL)
     return -1;
 
   for(int i = 0; i < Num_Items; i++)
   {
-    fprintf(fp, "%d %s %s %d %d %d %s %s\n", Items[i].ID, Items[i].Nome, Items[i].Categoria, Items[i].preco_base, Items[i].preco_agora, Items[i].duracao, Items[i].seller, Items[i].highestbidder);
+    if(!Items[i].activeDiscount)
+    {
+      fprintf(fp, "%d %s %s %d %d %d %s %s\n", Items[i].ID, Items[i].Nome, Items[i].Categoria, Items[i].preco_base, Items[i].preco_agora, Items[i].duracao, Items[i].seller, Items[i].highestbidder);
+    }
+    /*
+    else
+    {
+      calcPercentagem = 1 - (double)Items[i].percentagem / 100;
+      fprintf(fp, "%d %s %s %d %d %d %s %s\n", Items[i].ID, Items[i].Nome, Items[i].Categoria, Items[i].preco_base / calcPercentagem, Items[i].preco_agora / calcPercentagem, Items[i].duracao, Items[i].seller, Items[i].highestbidder);
+    }
+    */
   }
 
   fclose(fp);
@@ -440,6 +450,7 @@ void *trata_comandos(void *pdata)
                 
                 break;
               }
+              printf("Compraste gj\n");
             }
           }
           write(fdcli, data->user.input[0], sizeof(data->user.input[0]));
@@ -669,8 +680,6 @@ void *trata_promotor(void *pdata)
             }
           }
 
-          pthread_mutex_unlock(data->wait);
-
           for (int i = 0; i < *data->nclientes; i++)
           {
             sprintf(NomeCli, "CLI%d", data->cliente[i]);
@@ -680,6 +689,7 @@ void *trata_promotor(void *pdata)
             close(fdcli);
           }
         }
+        pthread_mutex_unlock(data->wait);
       }
     }
     else
