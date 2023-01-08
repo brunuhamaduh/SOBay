@@ -40,7 +40,7 @@ void *trata_comandos(void *pdata)
   int feedback;
   int lastID;
   int amountDiscount = 0;
-  double calcPercentagem = 0;
+  double calcPercentagem = 1;
   int duracaoDiscount = 0;
   bool activeDiscount = false;
   char NomeCli[10];
@@ -140,16 +140,10 @@ void *trata_comandos(void *pdata)
           strcpy(data->Items[data->nitems - 1].Nome, data->user.input[1]); 
           strcpy(data->Items[data->nitems - 1].Categoria, data->user.input[2]);
           if(activeDiscount)
-          {
             calcPercentagem = 1 - (double)amountDiscount / 100;
-            data->Items[data->nitems - 1].preco_base = atoi(data->user.input[3]) / calcPercentagem;
-            data->Items[data->nitems - 1].preco_agora = atoi(data->user.input[4]) / calcPercentagem;
-          }
-          else
-          {
-            data->Items[data->nitems - 1].preco_base = atoi(data->user.input[3]);
-            data->Items[data->nitems - 1].preco_agora = atoi(data->user.input[4]);
-          }
+
+          data->Items[data->nitems - 1].preco_base = atoi(data->user.input[3]) * calcPercentagem;
+          data->Items[data->nitems - 1].preco_agora = atoi(data->user.input[4]) * calcPercentagem;
           data->Items[data->nitems - 1].activeDiscount = activeDiscount;
           data->Items[data->nitems - 1].percentagem = amountDiscount;
           data->Items[data->nitems - 1].duracaoDiscount = duracaoDiscount;
