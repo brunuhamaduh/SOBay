@@ -54,7 +54,7 @@ bool VerificaComando(char *string, User *user)
 int saveItemsFile(char * filename, Item *Items, int Num_Items)
 {
   FILE *fp;
-  double calcPercentagem;
+  double calcPercentagem = 1;
   fp = fopen(filename, "w");
   if(fp == NULL)
     return -1;
@@ -393,7 +393,11 @@ void *trata_comandos(void *pdata)
                   if(data->Items[i].activeDiscount == true)
                   {
                     calcPercentagem = 1 - (double)data->Items[i].percentagem / 100;
-                    updateUserBalance(data->Items[i].seller, getUserBalance(data->Items[i].seller) + (data->Items[i].preco_base / calcPercentagem));
+                    updateUserBalance(data->Items[i].seller, getUserBalance(data->Items[i].seller) + (int)(data->Items[i].preco_agora / calcPercentagem));
+                  }
+                  else
+                  {
+                    updateUserBalance(data->Items[i].seller, getUserBalance(data->Items[i].seller) + data->Items[i].preco_agora);
                   }
                   
                   Item *temp = malloc(sizeof(Item));
@@ -543,7 +547,11 @@ void *trata_segundos(void *pdata)
           if(data->Items[i].activeDiscount == true)
           {
             calcPercentagem = 1 - (double)data->Items[i].percentagem / 100;
-            updateUserBalance(data->Items[i].seller, getUserBalance(data->Items[i].seller) + (data->Items[i].preco_base / calcPercentagem));
+            updateUserBalance(data->Items[i].seller, getUserBalance(data->Items[i].seller) + (int)(data->Items[i].preco_base / calcPercentagem));
+          }
+          else
+          {
+            updateUserBalance(data->Items[i].seller, getUserBalance(data->Items[i].seller) + data->Items[i].preco_base / calcPercentagem);
           }
         }
         else
@@ -582,8 +590,8 @@ void *trata_segundos(void *pdata)
         calcPercentagem = 1 - (double)data->Items[i].percentagem / 100;
         data->Items[i].activeDiscount = false;
         data->Items[i].percentagem = 0;
-        data->Items[i].preco_base = data->Items[i].preco_base / calcPercentagem;
-        data->Items[i].preco_agora = data->Items[i].preco_agora / calcPercentagem;
+        data->Items[i].preco_base = (int)(data->Items[i].preco_base / calcPercentagem);
+        data->Items[i].preco_agora = (int)(data->Items[i].preco_agora / calcPercentagem);
         strcpy(comando, "expireddiscount");
         for (int j = 0; j < *(data->nclientes); j++)
         {
@@ -607,10 +615,6 @@ void *trata_segundos(void *pdata)
     fclose(fp);
   }
 
-  for(int i = 0; i < data->nitems; i++)
-  {
-    printf("%s %d\n", data->Items[i].Nome, data->Items[i].percentagem);
-  }
   saveItemsFile(data->itemfilename, data->Items, data->nitems);
   pthread_exit(NULL);
 }
