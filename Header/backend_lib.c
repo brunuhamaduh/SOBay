@@ -149,6 +149,7 @@ void *trata_comandos(void *pdata)
   int n, fdcli, feedback, lastID, amountDiscount = 0, duracaoDiscount = 0;
   double calcPercentagem = 1;
   bool activeDiscount = false;
+  bool goAhead = true;
   char NomeCli[10], comando[20];
   char Nomes[20][20];
   data->nitems = loadItemsFile(data->itemfilename, &data->Items, &lastID);
@@ -156,6 +157,7 @@ void *trata_comandos(void *pdata)
 
   do
   {
+    goAhead = true;
     n = read(data->bf, &data->user, sizeof(User)); 
     pthread_mutex_lock(data->wait);
     if(n == sizeof(User))
@@ -163,11 +165,21 @@ void *trata_comandos(void *pdata)
       sprintf(NomeCli, "CLI%d", data->user.pid);
       if(isUserValid(data->user.Username, data->user.Password) == 1 && *(data->nclientes) < 20 && strcmp(data->user.input[0], "login") == 0)
       {
-        *(data->nclientes) = *(data->nclientes) + 1;
-        strcpy(Nomes[*(data->nclientes) - 1], data->user.Username);
-        data->nomecliente[*(data->nclientes) - 1] = Nomes[*(data->nclientes) - 1];
-        data->cliente[*(data->nclientes) - 1] = data->user.pid;
-        feedback = 1;
+        for(int i = 0; i < *data->nclientes; i++)
+        {
+          if(strcmp(data->nomecliente[i], data->user.Username) == 0)
+            goAhead = false;
+        }
+        if(goAhead)
+        {
+          *(data->nclientes) = *(data->nclientes) + 1;
+          strcpy(Nomes[*(data->nclientes) - 1], data->user.Username);
+          data->nomecliente[*(data->nclientes) - 1] = Nomes[*(data->nclientes) - 1];
+          data->cliente[*(data->nclientes) - 1] = data->user.pid;
+          feedback = 1;
+        }
+        else
+          feedback = 2;
         fdcli = open(NomeCli, O_WRONLY);
         write(fdcli, &feedback, sizeof(feedback));
         close(fdcli);

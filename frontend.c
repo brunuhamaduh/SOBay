@@ -40,13 +40,15 @@ int main(int argc, char* argv[])
   
   caixa = open(NomeCaixa, O_RDWR);
   read(caixa, &feedback, sizeof(feedback));
-
   if(feedback != 1)
   {
     close(caixa);
     close(bf);
     unlink(NomeCaixa);
-    Abort("Utilizador nao existe\n");
+    if(feedback == 2)
+      Abort("Utilizador ja esta online\n");
+    else
+      Abort("Utilizador nao existe\n");
   }
 
   printf("Welcome '%s'\n", user.Username);
